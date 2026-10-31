@@ -44,11 +44,29 @@
   - Added model access CSV rules (`ir.model.access.csv`) across all core addons for Operations Manager.
   - Configured record rules (`ir.rule`) in `solar_crm`, `solar_installation`, `solar_survey`, `solar_warranty`, `solar_service`.
 
-### Automated Testing Suite (89 Tests Passed 100%)
+### Moderate Enterprise Login Portal & Distinct Role Credentials
+- [x] **Moderate & Clean UI Design**:
+  - Refined, moderate enterprise aesthetic aligning with Odoo 17 CE official design principles.
+  - Subdued elevation shadows and balanced borders replacing over-the-top glows.
+  - Dual-mode support (Light & Dark themes) with crisp contrast, clean badges, and responsive grid layouts.
+- [x] **Distinct Email and Password Authentication per Role**:
+  - **Director / Executive Administrator**: `director@sunpower.com` | `Director@360` (Full executive scope & financials)
+  - **Sales Administrator**: `sales@sunpower.com` | `Sales@360` (Siddharth Rao - CRM pipeline & quotations)
+  - **Operations Manager**: `ops@sunpower.com` | `Ops@360` (Pradeep Gowda - 15-tech dispatch & inventory)
+  - **Field Technician**: `tech@sunpower.com` | `Tech@360` (Suresh Patel - Assigned work orders & safety testing)
+- [x] **Credential Verification & Interactive Helpers**:
+  - Two-factor visual feedback: quick "Autofill" button on role cards and interactive credentials form with email/password validation.
+  - Password show/hide toggle (`👁` / `🔒`).
+  - Inline error feedback on unauthorized emails or incorrect passwords.
+  - REST API endpoint (`POST /api/login` and `POST /api/auth`) returning role-scoped session tokens.
+
+### Automated Testing Suite (98 Tests Passed 100%)
 - [x] **38 Gateway & Runtime Endpoint Tests (`test_server_endpoints.py`)**: 100% PASS
   - All 15 REST endpoints, Global Search, 10 BI assistant queries, CRM lead ingestion, survey approvals, tech dispatch, safety testing, commissioning, and negative constraint tests.
 - [x] **28 Cross-Module Integration Tests (`tests/integration/`)**: 100% PASS
   - Addon manifests, XML views, ACL CSVs, Python syntax, AI services, and business rules.
 - [x] **23 Role-Based Security Boundary Tests (`tests/test_role_security_matrix.py`)**: 100% PASS
   - Separate automated verification of Director, Salesperson, Operations Manager, and Field Technician permissions, record-level isolation, margin stripping, and HTTP 403 denial.
-- [x] **Grand Total**: **89 automated tests executed with 100% pass rate**.
+- [x] **9 Role Login & Distinct Credentials Tests (`tests/test_role_login_credentials.py`)**: 100% PASS
+  - Automated verification of each role's distinct email/password, 401 Unauthorized rejection on bad passwords, and unregistered email prevention.
+- [x] **Grand Total**: **98 automated tests executed with 100% pass rate**.

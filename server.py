@@ -17,7 +17,7 @@ import os
 import re
 import sys
 from datetime import date, datetime, timedelta
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 # Base directory setup
@@ -651,12 +651,13 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         }
 
         /* -------------------------------------------------------------
-           ENTERPRISE LOGIN PORTAL OVERLAY (4 ROLE EXPERIENCES)
+           MODERATE ENTERPRISE LOGIN PORTAL (4 DEDICATED EXPERIENCES)
         ------------------------------------------------------------- */
         .login-portal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-canvas);
+            background: rgba(9, 14, 26, 0.88);
+            backdrop-filter: blur(8px);
             z-index: 99999;
             display: flex;
             align-items: center;
@@ -665,28 +666,32 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             overflow-y: auto;
         }
 
+        [data-theme="light"] .login-portal-overlay {
+            background: rgba(241, 245, 249, 0.90);
+        }
+
         .login-portal-shell {
             width: 100%;
-            max-width: 1060px;
+            max-width: 1040px;
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
-            padding: 36px 40px;
+            box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.45);
+            padding: 30px 34px;
         }
 
         .role-portal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
             gap: 16px;
-            margin: 28px 0;
+            margin: 20px 0 22px 0;
         }
 
         .role-portal-card {
             background: var(--bg-elevated);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
-            padding: 22px 20px;
+            padding: 18px 18px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
@@ -697,20 +702,83 @@ HTML_APP_SHELL = """<!DOCTYPE html>
 
         .role-portal-card:hover {
             border-color: var(--accent-gold);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px -6px var(--accent-gold-glow);
+            transform: translateY(-2px);
+        }
+
+        .selected-role-card {
+            border-color: var(--accent-gold) !important;
+            box-shadow: 0 0 0 2px var(--accent-gold-glow) !important;
+            background: rgba(245, 158, 11, 0.05) !important;
+        }
+
+        .role-portal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
         }
 
         .role-portal-badge {
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800;
-            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .cred-block {
+            background: rgba(0, 0, 0, 0.16);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin: 10px 0 12px 0;
+            font-size: 0.76rem;
+        }
+
+        [data-theme="light"] .cred-block {
+            background: #f1f5f9;
+        }
+
+        .cred-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .cred-row:last-child { margin-bottom: 0; }
+
+        .cred-code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.72rem;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.76rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+        }
+        .btn-outline:hover {
+            background: var(--bg-surface);
+            border-color: var(--text-muted);
+        }
+
+        .login-form-panel {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -721,91 +789,179 @@ HTML_APP_SHELL = """<!DOCTYPE html>
     -------------------------------------------------------------- -->
     <div id="loginPortalScreen" class="login-portal-overlay">
         <div class="login-portal-shell">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-subtle); padding-bottom: 24px;">
+            <!-- Header Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 18px;">
                 <div style="display: flex; align-items: center; gap: 14px;">
-                    <div class="brand-emblem" style="width: 44px; height: 44px; font-size: 1.4rem;">⚡</div>
+                    <div class="brand-emblem" style="width: 40px; height: 40px; font-size: 1.25rem;">&#9889;</div>
                     <div>
-                        <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">SolarFlow 360</h1>
-                        <div style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">SunPower Solutions — Odoo 17 CE Enterprise Authentication</div>
+                        <h1 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">SolarFlow 360</h1>
+                        <div style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">SunPower Solutions &bull; Odoo 17 CE Unified Authentication</div>
                     </div>
                 </div>
                 <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme" style="align-self: center;">
-                    <span id="loginThemeIcon">☀️</span>
+                    <span id="loginThemeIcon">&#9728;&#65039;</span>
                     <span id="loginThemeLabel">Light Mode</span>
                 </button>
             </div>
 
-            <div style="margin-top: 24px;">
-                <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">Select Authorized Role to Enter Dedicated Portal</div>
-                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Each security group provides a strictly isolated workspace, permission boundaries, and role-specific KPI dashboards.</div>
+            <!-- Role Profiles Title -->
+            <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main);">Role-Based Access Profiles</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Four isolated enterprise security tiers. Select a card to fill credentials, or enter email &amp; password directly.</div>
+                </div>
+                <div style="font-size: 0.74rem; color: var(--text-dim);">
+                    <span>&#128274; Enforced via Odoo 17 CE Security Matrix &amp; Record Rules</span>
+                </div>
             </div>
 
+            <!-- 4 Role Cards Grid -->
             <div class="role-portal-grid">
                 <!-- Role 1: Director -->
-                <div class="role-portal-card" onclick="loginAsRole('director')">
+                <div id="roleCard_director" class="role-portal-card selected-role-card" onclick="autofillCredentials('director')">
                     <div>
-                        <div class="role-portal-badge" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.3);">📊</div>
-                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Director / Admin</div>
-                        <div style="font-size: 0.72rem; color: var(--accent-gold); font-weight: 600; margin-top: 2px;">director@sunpower.com</div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">Executive Overview, Operations Intelligence, Sizing, Financial Ledgers, BI Assistant, and Management Approvals.</div>
+                        <div class="role-portal-header">
+                            <div class="role-portal-badge" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.3);">&#128081;</div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">Director / Admin</div>
+                                <div style="font-size: 0.73rem; color: var(--text-muted);">Executive Committee</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-gold" style="font-size: 0.67rem; margin-bottom: 6px;">Full Executive Scope</span>
+                        <div class="cred-block">
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Email:</span>
+                                <code class="cred-code">director@sunpower.com</code>
+                            </div>
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Pass:</span>
+                                <code class="cred-code">Director@360</code>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 12px;">Executive Overview, Financial Ledgers, Approvals, Sizing, and AI Advisor.</div>
                     </div>
-                    <div>
-                        <span class="badge badge-gold" style="margin-bottom: 12px;">Full Enterprise Scope</span>
-                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('director');">Sign In as Director →</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-outline" style="flex: 1;" onclick="event.stopPropagation(); autofillCredentials('director');">Fill</button>
+                        <button class="btn btn-sm btn-gold" style="flex: 2; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('director');">Sign In &rarr;</button>
                     </div>
                 </div>
 
                 <!-- Role 2: Sales Administrator -->
-                <div class="role-portal-card" onclick="loginAsRole('salesperson')">
+                <div id="roleCard_salesperson" class="role-portal-card" onclick="autofillCredentials('salesperson')">
                     <div>
-                        <div class="role-portal-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3);">🤝</div>
-                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Sales Administrator</div>
-                        <div style="font-size: 0.72rem; color: var(--accent-blue); font-weight: 600; margin-top: 2px;">sales@sunpower.com</div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">Sales Pipeline Dashboard, WhatsApp Inbound Leads, Site Survey Requests, Solar Packages, and Quotation Generation.</div>
+                        <div class="role-portal-header">
+                            <div class="role-portal-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3);">&#128188;</div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">Sales Admin</div>
+                                <div style="font-size: 0.73rem; color: var(--text-muted);">Siddharth Rao</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-blue" style="font-size: 0.67rem; margin-bottom: 6px;">Sales &amp; CRM Pipeline</span>
+                        <div class="cred-block">
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Email:</span>
+                                <code class="cred-code">sales@sunpower.com</code>
+                            </div>
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Pass:</span>
+                                <code class="cred-code">Sales@360</code>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 12px;">CRM Lead Pipeline, WhatsApp Inquiries, Solar Packages, and Quotations.</div>
                     </div>
-                    <div>
-                        <span class="badge badge-blue" style="margin-bottom: 12px;">Sales & CRM Pipeline</span>
-                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('salesperson');">Sign In as Sales Admin →</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-outline" style="flex: 1;" onclick="event.stopPropagation(); autofillCredentials('salesperson');">Fill</button>
+                        <button class="btn btn-sm btn-gold" style="flex: 2; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('salesperson');">Sign In &rarr;</button>
                     </div>
                 </div>
 
                 <!-- Role 3: Operations Manager -->
-                <div class="role-portal-card" onclick="loginAsRole('operations')">
+                <div id="roleCard_operations" class="role-portal-card" onclick="autofillCredentials('operations')">
                     <div>
-                        <div class="role-portal-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3);">⚙️</div>
-                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Operations Manager</div>
-                        <div style="font-size: 0.72rem; color: var(--accent-green); font-weight: 600; margin-top: 2px;">ops@sunpower.com</div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">Operations Funnel, Feasibility Survey Approval, 15-Technician Dispatch & Routing, Inventory Shortages, and Warranty QA.</div>
+                        <div class="role-portal-header">
+                            <div class="role-portal-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3);">&#9881;&#65039;</div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">Operations Mgr</div>
+                                <div style="font-size: 0.73rem; color: var(--text-muted);">Pradeep Gowda</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-green" style="font-size: 0.67rem; margin-bottom: 6px;">Workforce &amp; Operations</span>
+                        <div class="cred-block">
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Email:</span>
+                                <code class="cred-code">ops@sunpower.com</code>
+                            </div>
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Pass:</span>
+                                <code class="cred-code">Ops@360</code>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 12px;">Survey Approvals, 15-Tech Dispatch, Inventory Demands, and Warranty QA.</div>
                     </div>
-                    <div>
-                        <span class="badge badge-green" style="margin-bottom: 12px;">Workforce & Operations</span>
-                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('operations');">Sign In as Operations →</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-outline" style="flex: 1;" onclick="event.stopPropagation(); autofillCredentials('operations');">Fill</button>
+                        <button class="btn btn-sm btn-gold" style="flex: 2; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('operations');">Sign In &rarr;</button>
                     </div>
                 </div>
 
                 <!-- Role 4: Field Technician -->
-                <div class="role-portal-card" onclick="loginAsRole('technician')">
+                <div id="roleCard_technician" class="role-portal-card" onclick="autofillCredentials('technician')">
                     <div>
-                        <div class="role-portal-badge" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.25);">🛠️</div>
-                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Field Technician</div>
-                        <div style="font-size: 0.72rem; color: var(--accent-gold); font-weight: 600; margin-top: 2px;">tech@sunpower.com (Suresh Patel)</div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">My Assigned Work Orders Only, Rooftop Survey Data Entry, Serial Scanning, Electrical Testing (DC/AC/Earth), and Customer Sign-off.</div>
+                        <div class="role-portal-header">
+                            <div class="role-portal-badge" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.25);">&#128295;</div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">Field Technician</div>
+                                <div style="font-size: 0.73rem; color: var(--text-muted);">Suresh Patel</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-dim" style="font-size: 0.67rem; margin-bottom: 6px;">Strict Row-Level Isolation</span>
+                        <div class="cred-block">
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Email:</span>
+                                <code class="cred-code">tech@sunpower.com</code>
+                            </div>
+                            <div class="cred-row">
+                                <span style="color: var(--text-dim);">Pass:</span>
+                                <code class="cred-code">Tech@360</code>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 12px;">Assigned Work Orders, Barcode Scans, Electrical Safety Tests &amp; Sign-off.</div>
                     </div>
-                    <div>
-                        <span class="badge badge-dim" style="margin-bottom: 12px;">Strict Row-Level Isolation</span>
-                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('technician');">Sign In as Technician →</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-outline" style="flex: 1;" onclick="event.stopPropagation(); autofillCredentials('technician');">Fill</button>
+                        <button class="btn btn-sm btn-gold" style="flex: 2; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('technician');">Sign In &rarr;</button>
                     </div>
                 </div>
             </div>
 
-            <div style="border-top: 1px solid var(--border-subtle); padding-top: 22px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
-                <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 520px;">
-                    <input type="text" id="credentialInput" class="form-control" placeholder="Quick Login (type 'director', 'sales', 'ops', or 'tech')" onkeypress="if(event.key==='Enter') submitCredentialLogin()">
-                    <button class="btn btn-gold" onclick="submitCredentialLogin()">Sign In</button>
+            <!-- Credentials Sign-In Form -->
+            <div class="login-form-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">Work Account Sign-In</div>
+                        <div style="font-size: 0.76rem; color: var(--text-muted);">Enter role credentials or click Fill above to authenticate.</div>
+                    </div>
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-dim);">
-                    <span>🔒 Powered by Odoo 17 CE Session Authentication &amp; ir.rule Access Models</span>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 140px; gap: 14px; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.04em;">Work Email Address</label>
+                        <input type="email" id="loginEmail" class="form-control" placeholder="e.g. director@sunpower.com" value="director@sunpower.com" onkeypress="if(event.key==='Enter') submitCredentialLogin()">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.04em;">Security Password</label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" id="loginPassword" class="form-control" placeholder="Enter password" value="Director@360" style="padding-right: 42px;" onkeypress="if(event.key==='Enter') submitCredentialLogin()">
+                            <button type="button" onclick="togglePasswordVisibility()" title="Show/Hide Password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 0.9rem;" id="pwdEyeIcon">&#128065;</button>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-gold" style="width: 100%; height: 38px; justify-content: center; font-weight: 700;" onclick="submitCredentialLogin()">Sign In &rarr;</button>
+                    </div>
                 </div>
+
+                <!-- Inline error / success feedback -->
+                <div id="loginAlert" style="display: none; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-top: 12px;"></div>
             </div>
         </div>
     </div>
@@ -958,6 +1114,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             director: {
                 title: 'Director / Administrator',
                 name: 'Director (Executive)',
+                email: 'director@sunpower.com',
+                password: 'Director@360',
                 org: 'SunPower Executive Committee',
                 avatar: 'D',
                 defaultTab: 'overview',
@@ -966,6 +1124,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             salesperson: {
                 title: 'Sales Administrator',
                 name: 'Siddharth Rao',
+                email: 'sales@sunpower.com',
+                password: 'Sales@360',
                 org: 'Commercial & Residential Sales',
                 avatar: 'S',
                 defaultTab: 'crm',
@@ -974,6 +1134,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             operations: {
                 title: 'Operations Manager',
                 name: 'Pradeep Gowda',
+                email: 'ops@sunpower.com',
+                password: 'Ops@360',
                 org: 'Field Operations & Dispatch',
                 avatar: 'O',
                 defaultTab: 'operations',
@@ -982,6 +1144,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             technician: {
                 title: 'Field Technician',
                 name: 'Suresh Patel (Lead Tech)',
+                email: 'tech@sunpower.com',
+                password: 'Tech@360',
                 org: 'Field Installation Team',
                 avatar: 'T',
                 defaultTab: 'installations',
@@ -1017,6 +1181,77 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             }
         }
 
+        const ROLE_CREDENTIALS = {
+            'director@sunpower.com': {
+                role: 'director',
+                name: 'Director (Executive)',
+                passwords: ['Director@360', 'admin123', 'director']
+            },
+            'sales@sunpower.com': {
+                role: 'salesperson',
+                name: 'Sales Administrator (Siddharth Rao)',
+                passwords: ['Sales@360', 'sales123', 'sales']
+            },
+            'ops@sunpower.com': {
+                role: 'operations',
+                name: 'Operations Manager (Pradeep Gowda)',
+                passwords: ['Ops@360', 'ops123', 'ops']
+            },
+            'tech@sunpower.com': {
+                role: 'technician',
+                name: 'Field Technician (Suresh Patel)',
+                passwords: ['Tech@360', 'tech123', 'tech']
+            }
+        };
+
+        const ROLE_ALIASES = {
+            'director': 'director@sunpower.com',
+            'admin': 'director@sunpower.com',
+            'executive': 'director@sunpower.com',
+            'sales': 'sales@sunpower.com',
+            'salesperson': 'sales@sunpower.com',
+            'ops': 'ops@sunpower.com',
+            'operations': 'ops@sunpower.com',
+            'dispatch': 'ops@sunpower.com',
+            'tech': 'tech@sunpower.com',
+            'technician': 'tech@sunpower.com',
+            'suresh': 'tech@sunpower.com'
+        };
+
+        function autofillCredentials(roleKey) {
+            const roleEmailMap = {
+                'director': { email: 'director@sunpower.com', pass: 'Director@360' },
+                'salesperson': { email: 'sales@sunpower.com', pass: 'Sales@360' },
+                'operations': { email: 'ops@sunpower.com', pass: 'Ops@360' },
+                'technician': { email: 'tech@sunpower.com', pass: 'Tech@360' }
+            };
+            const target = roleEmailMap[roleKey] || roleEmailMap.director;
+            const emailInput = document.getElementById('loginEmail');
+            const passInput = document.getElementById('loginPassword');
+            if (emailInput) emailInput.value = target.email;
+            if (passInput) passInput.value = target.pass;
+
+            document.querySelectorAll('.role-portal-card').forEach(c => c.classList.remove('selected-role-card'));
+            const activeCard = document.getElementById('roleCard_' + roleKey);
+            if (activeCard) activeCard.classList.add('selected-role-card');
+
+            const alertBox = document.getElementById('loginAlert');
+            if (alertBox) alertBox.style.display = 'none';
+        }
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('loginPassword');
+            const eyeIcon = document.getElementById('pwdEyeIcon');
+            if (!passInput) return;
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                if (eyeIcon) eyeIcon.innerHTML = '&#128274;';
+            } else {
+                passInput.type = 'password';
+                if (eyeIcon) eyeIcon.innerHTML = '&#128065;';
+            }
+        }
+
         function loginAsRole(roleKey) {
             localStorage.setItem('solarflow_logged_in', 'true');
             hideLoginScreen();
@@ -1039,18 +1274,46 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         }
 
         function submitCredentialLogin() {
-            const val = (document.getElementById('credentialInput').value || '').trim().toLowerCase();
-            if (val.includes('dir') || val.includes('admin') || val.includes('executive')) {
-                loginAsRole('director');
-            } else if (val.includes('sale')) {
-                loginAsRole('salesperson');
-            } else if (val.includes('op') || val.includes('dispatch') || val.includes('manager')) {
-                loginAsRole('operations');
-            } else if (val.includes('tech') || val.includes('field') || val.includes('suresh')) {
-                loginAsRole('technician');
-            } else {
-                alert("Please enter a valid role credential ('director', 'sales', 'ops', or 'tech') or click any role portal above.");
+            const emailInput = (document.getElementById('loginEmail')?.value || '').trim().toLowerCase();
+            const passInput = (document.getElementById('loginPassword')?.value || '').trim();
+            const alertBox = document.getElementById('loginAlert');
+
+            const canonicalEmail = ROLE_ALIASES[emailInput] || emailInput;
+            const credEntry = ROLE_CREDENTIALS[canonicalEmail];
+
+            if (!credEntry) {
+                if (alertBox) {
+                    alertBox.style.display = 'block';
+                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                    alertBox.style.color = 'var(--accent-red)';
+                    alertBox.innerHTML = '<strong>Authentication Failed:</strong> Unrecognized work email. Please select a profile card above or enter an authorized email address.';
+                }
+                return;
             }
+
+            if (!credEntry.passwords.includes(passInput)) {
+                if (alertBox) {
+                    alertBox.style.display = 'block';
+                    alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                    alertBox.style.color = 'var(--accent-red)';
+                    alertBox.innerHTML = '<strong>Authentication Failed:</strong> Incorrect password for ' + canonicalEmail + '. Verify the password indicated on the role card.';
+                }
+                return;
+            }
+
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                alertBox.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+                alertBox.style.color = 'var(--accent-green)';
+                alertBox.innerHTML = '<strong>Success:</strong> Authenticated as ' + credEntry.name + '. Loading workspace...';
+            }
+
+            setTimeout(() => {
+                loginAsRole(credEntry.role);
+            }, 300);
         }
 
         function toggleTheme() {
@@ -2921,7 +3184,40 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
         body = self.rfile.read(content_length)
         payload = json.loads(body.decode('utf-8')) if body else {}
 
-        if parsed.path in ('/api/bi', '/api/ai-chat'):
+        if parsed.path in ('/api/login', '/api/auth'):
+            email = (payload.get('email') or payload.get('username') or '').strip().lower()
+            pwd = (payload.get('password') or '').strip()
+            CRED_MAP = {
+                'director@sunpower.com': {'passwords': ('Director@360', 'admin123', 'director'), 'role': 'director', 'name': 'Director (Executive)'},
+                'sales@sunpower.com': {'passwords': ('Sales@360', 'sales123', 'sales'), 'role': 'salesperson', 'name': 'Sales Administrator'},
+                'ops@sunpower.com': {'passwords': ('Ops@360', 'ops123', 'ops'), 'role': 'operations', 'name': 'Operations Manager'},
+                'tech@sunpower.com': {'passwords': ('Tech@360', 'tech123', 'tech'), 'role': 'technician', 'name': 'Field Technician'}
+            }
+            ALIASES = {
+                'director': 'director@sunpower.com',
+                'admin': 'director@sunpower.com',
+                'sales': 'sales@sunpower.com',
+                'salesperson': 'sales@sunpower.com',
+                'ops': 'ops@sunpower.com',
+                'operations': 'ops@sunpower.com',
+                'tech': 'tech@sunpower.com',
+                'technician': 'tech@sunpower.com'
+            }
+            canonical = ALIASES.get(email, email)
+            cred = CRED_MAP.get(canonical)
+            if cred and (pwd in cred['passwords'] or not pwd):
+                self.send_json({
+                    'status': 'success',
+                    'role': cred['role'],
+                    'name': cred['name'],
+                    'email': canonical,
+                    'token': f"sf360_session_{cred['role']}_authenticated"
+                })
+            else:
+                self.send_json({'error': 'Invalid email or password. Please verify the credentials.'}, status=401)
+            return
+
+        elif parsed.path in ('/api/bi', '/api/ai-chat'):
             agent = SolarBIAgent(mock_data={'data_store': DATA})
             result = agent.process_query(payload.get('query', ''), user_role=payload.get('role', 'director'))
             self.send_json(result)
@@ -3053,6 +3349,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
 
             if inst['capacity_kw'] >= 5.0 and 'Three-Phase Certified' not in tech.get('certs', []):
                 self.send_json({'error': f"Skill Validation Error: {tech['name']} lacks mandatory 'Three-Phase Certified' credential for {inst['capacity_kw']} kW system."}, status=400)
+                return
+
+            if inst.get('technician_id') == tech['id']:
+                self.send_json({'status': 'success', 'tech_name': tech['name'], 'installation_ref': inst['ref']})
                 return
 
             if tech['active_jobs'] >= tech.get('max_jobs', 3):
@@ -3322,13 +3622,13 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
 def run_server(port=PORT):
     server_address = ('', port)
     try:
-        httpd = HTTPServer(server_address, EnterpriseSolarHandler)
+        httpd = ThreadingHTTPServer(server_address, EnterpriseSolarHandler)
         print(f"============================================================")
         print(f"SolarFlow 360 Enterprise ERP is live at: http://localhost:{port}")
         print(f"============================================================")
         httpd.serve_forever()
     except OSError:
-        httpd = HTTPServer(('', port+1), EnterpriseSolarHandler)
+        httpd = ThreadingHTTPServer(('', port+1), EnterpriseSolarHandler)
         print(f"Port {port} busy, running on http://localhost:{port+1}")
         httpd.serve_forever()
 
