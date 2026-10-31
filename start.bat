@@ -39,8 +39,16 @@ if %errorlevel% equ 0 (
 
 :: Step 3: Standalone Python Gateway fallback
 echo.
-echo [NOTICE] Docker is not active on this system.
-echo Launching SolarFlow 360 Local Gateway & AI Engine on Port 8069...
+echo ========================================================
+echo   ROLE-BASED WORKSPACE CREDENTIALS (Odoo 17 CE):
+echo   ------------------------------------------------------
+echo   1. Director:   director@sunpower.com  /  Director@360
+echo   2. Sales:      sales@sunpower.com     /  Sales@360
+echo   3. Operations: ops@sunpower.com       /  Ops@360
+echo   4. Technician: tech@sunpower.com      /  Tech@360
+echo ========================================================
+echo.
+echo Launching SolarFlow 360 Local Gateway on Port 8069...
 echo.
 
 where python >nul 2>&1
@@ -50,6 +58,6 @@ if %errorlevel% neq 0 (
     set "PYTHON_EXE=python"
 )
 
-start "" http://localhost:8069
+start "" http://localhost:8069/?login=1
 "%PYTHON_EXE%" server.py
 pause
