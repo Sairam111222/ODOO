@@ -216,7 +216,28 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             --radius-lg: 18px;
             --radius-pill: 9999px;
             --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.6);
-            --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            --transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Light Theme Tokens */
+        [data-theme="light"] {
+            --bg-canvas: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --bg-topbar: rgba(255, 255, 255, 0.90);
+            --bg-surface: #ffffff;
+            --bg-elevated: #f1f5f9;
+            --border-subtle: #e2e8f0;
+            --border-active: #d97706;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-dim: #64748b;
+            --accent-gold: #d97706;
+            --accent-gold-dark: #b45309;
+            --accent-gold-glow: rgba(217, 119, 6, 0.15);
+            --accent-blue: #2563eb;
+            --accent-green: #059669;
+            --accent-red: #dc2626;
+            --shadow-card: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
@@ -377,7 +398,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
 
         .top-left { display: flex; align-items: center; gap: 16px; }
         .breadcrumb { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 0.8rem; }
-        .breadcrumb-active { color: #fff; font-weight: 600; }
+        .breadcrumb-active { color: var(--text-main); font-weight: 600; }
 
         .top-center { flex: 1; max-width: 440px; margin: 0 24px; }
         .search-shell {
@@ -389,7 +410,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             width: 100%;
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
-            color: #fff;
+            color: var(--text-main);
             padding: 7px 14px 7px 34px;
             border-radius: var(--radius-pill);
             font-size: 0.82rem;
@@ -405,13 +426,32 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         .role-selector {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
-            color: #fff;
+            color: var(--text-main);
             padding: 5px 12px;
             border-radius: var(--radius-sm);
             font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
             outline: none;
+        }
+
+        .theme-toggle-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+        .theme-toggle-btn:hover {
+            background: var(--bg-elevated);
+            border-color: var(--accent-gold);
         }
 
         .system-pill {
@@ -442,7 +482,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             margin-bottom: 24px;
         }
 
-        .page-title { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.025em; color: #fff; }
+        .page-title { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.025em; color: var(--text-main); }
         .page-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
         .header-actions { display: flex; gap: 10px; }
@@ -451,7 +491,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         .btn {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
-            color: #fff;
+            color: var(--text-main);
             padding: 8px 16px;
             border-radius: var(--radius-sm);
             font-size: 0.82rem;
@@ -486,7 +526,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
 
         .kpi-card:hover { border-color: rgba(245, 158, 11, 0.35); }
         .kpi-title { font-size: 0.72rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-        .kpi-value { font-size: 1.7rem; font-weight: 800; color: #fff; margin: 6px 0 4px 0; letter-spacing: -0.02em; }
+        .kpi-value { font-size: 1.7rem; font-weight: 800; color: var(--text-main); margin: 6px 0 4px 0; letter-spacing: -0.02em; }
         .kpi-sub { font-size: 0.74rem; font-weight: 500; display: flex; align-items: center; gap: 6px; }
         .sub-up { color: var(--accent-green); }
         .sub-down { color: var(--accent-red); }
@@ -509,7 +549,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             border-bottom: 1px solid var(--border-subtle);
         }
 
-        .card-h2 { font-size: 1.05rem; font-weight: 700; color: #fff; }
+        .card-h2 { font-size: 1.05rem; font-weight: 700; color: var(--text-main); }
 
         /* DATA TABLES */
         .data-table {
@@ -585,7 +625,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             margin-bottom: 20px;
         }
 
-        .modal-title { font-size: 1.15rem; font-weight: 800; color: #fff; }
+        .modal-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
         .close-modal { background: none; border: none; color: var(--text-dim); font-size: 1.3rem; cursor: pointer; }
 
         .form-row { margin-bottom: 16px; }
@@ -594,7 +634,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             width: 100%;
             background: var(--bg-elevated);
             border: 1px solid var(--border-subtle);
-            color: #fff;
+            color: var(--text-main);
             padding: 9px 12px;
             border-radius: var(--radius-sm);
             font-size: 0.85rem;
@@ -625,59 +665,59 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             </div>
         </div>
 
-        <nav class="nav-scroller">
-            <div class="nav-section-label">Operations Control</div>
-            <a class="nav-item active" onclick="loadView('overview', this)">
+        <nav class="nav-scroller" id="sidebarNav">
+            <div class="nav-section-label" data-nav-group="ops">Operations Control</div>
+            <a class="nav-item active" data-nav="overview" onclick="loadView('overview', this)">
                 <div class="nav-left"><span class="nav-icon">📊</span> <span>1. Executive Overview</span></div>
                 <span class="nav-badge">Live</span>
             </a>
-            <a class="nav-item" onclick="loadView('operations', this)">
+            <a class="nav-item" data-nav="operations" onclick="loadView('operations', this)">
                 <div class="nav-left"><span class="nav-icon">📈</span> <span>2. Operations Intelligence</span></div>
                 <span class="nav-badge">Funnel</span>
             </a>
-            <a class="nav-item" onclick="loadView('dispatch', this)">
+            <a class="nav-item" data-nav="dispatch" onclick="loadView('dispatch', this)">
                 <div class="nav-left"><span class="nav-icon">📍</span> <span>3. Technician Dispatch</span></div>
                 <span class="nav-badge">15 Pool</span>
             </a>
 
-            <div class="nav-section-label">Engineering & Sizing</div>
-            <a class="nav-item" onclick="loadView('sizing', this)">
+            <div class="nav-section-label" data-nav-group="eng">Engineering & Sizing</div>
+            <a class="nav-item" data-nav="sizing" onclick="loadView('sizing', this)">
                 <div class="nav-left"><span class="nav-icon">☀️</span> <span>4. Sizing Studio</span></div>
                 <span class="nav-badge">IEC 78%</span>
             </a>
-            <a class="nav-item" onclick="loadView('roof', this)">
+            <a class="nav-item" data-nav="roof" onclick="loadView('roof', this)">
                 <div class="nav-left"><span class="nav-icon">📐</span> <span>5. Roof Assessment</span></div>
                 <span class="nav-badge">Feasibility</span>
             </a>
-            <a class="nav-item" onclick="loadView('packages', this)">
+            <a class="nav-item" data-nav="packages" onclick="loadView('packages', this)">
                 <div class="nav-left"><span class="nav-icon">📦</span> <span>6. Solar Packages</span></div>
                 <span class="nav-badge">BOM</span>
             </a>
 
-            <div class="nav-section-label">Execution & Lifecycle</div>
-            <a class="nav-item" onclick="loadView('crm', this)">
+            <div class="nav-section-label" data-nav-group="exec">Execution & Lifecycle</div>
+            <a class="nav-item" data-nav="crm" onclick="loadView('crm', this)">
                 <div class="nav-left"><span class="nav-icon">🤝</span> <span>7. Customer & CRM</span></div>
                 <span class="nav-badge">WhatsApp</span>
             </a>
-            <a class="nav-item" onclick="loadView('inventory', this)">
+            <a class="nav-item" data-nav="inventory" onclick="loadView('inventory', this)">
                 <div class="nav-left"><span class="nav-icon">🏭</span> <span>8. Inventory & Traceability</span></div>
                 <span class="nav-badge">Serials</span>
             </a>
-            <a class="nav-item" onclick="loadView('installations', this)">
+            <a class="nav-item" data-nav="installations" onclick="loadView('installations', this)">
                 <div class="nav-left"><span class="nav-icon">🛠️</span> <span>9. Installation Ops</span></div>
                 <span class="nav-badge">Safety</span>
             </a>
-            <a class="nav-item" onclick="loadView('warranty', this)">
+            <a class="nav-item" data-nav="warranty" onclick="loadView('warranty', this)">
                 <div class="nav-left"><span class="nav-icon">🛡️</span> <span>10. Warranty & Service</span></div>
                 <span class="nav-badge">25-Yr</span>
             </a>
 
-            <div class="nav-section-label">Finance & Intelligence</div>
-            <a class="nav-item" onclick="loadView('financials', this)">
+            <div class="nav-section-label" data-nav-group="fin">Finance & Intelligence</div>
+            <a class="nav-item" data-nav="financials" onclick="loadView('financials', this)">
                 <div class="nav-left"><span class="nav-icon">💰</span> <span>11. Financial Intelligence</span></div>
                 <span class="nav-badge">Ledgers</span>
             </a>
-            <a class="nav-item" onclick="loadView('assistant', this)">
+            <a class="nav-item" data-nav="assistant" onclick="loadView('assistant', this)">
                 <div class="nav-left"><span class="nav-icon">🤖</span> <span>12. AI BI Assistant</span></div>
                 <span class="nav-badge">RBAC</span>
             </a>
@@ -686,7 +726,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         <div class="sidebar-user">
             <div class="user-avatar" id="avatarLetter">D</div>
             <div style="flex: 1; overflow: hidden;">
-                <div style="font-weight: 600; font-size: 0.8rem; color: #fff;" id="loggedUserName">Director (Executive)</div>
+                <div style="font-weight: 600; font-size: 0.8rem; color: var(--text-main);" id="loggedUserName">Director (Executive)</div>
                 <div style="font-size: 0.7rem; color: var(--text-dim);" id="loggedUserRole">SunPower Management</div>
             </div>
         </div>
@@ -713,14 +753,16 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             </div>
 
             <div class="top-right">
+                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch between Dark and Light mode">
+                    <span id="themeToggleIcon">☀️</span>
+                    <span id="themeToggleLabel">Light Mode</span>
+                </button>
+
                 <select class="role-selector" id="roleSelector" onchange="switchRole(this.value)">
-                    <option value="director">Director (Full Financial & Ops)</option>
-                    <option value="salesperson">Salesperson (CRM & Packages)</option>
-                    <option value="survey_manager">Survey Manager (Approval Gate)</option>
-                    <option value="warehouse">Warehouse Manager (Stock & Lots)</option>
-                    <option value="technician">Lead Technician (Field Testing)</option>
-                    <option value="accountant">Accountant (Invoices & Subsidies)</option>
-                    <option value="support">Support Agent (Service Tickets)</option>
+                    <option value="director">Director / Admin (Full Access)</option>
+                    <option value="salesperson">Sales Administrator (CRM & Quotes)</option>
+                    <option value="operations">Operations Manager (Workforce & QA)</option>
+                    <option value="technician">Field Technician (My Jobs Only)</option>
                 </select>
 
                 <div class="system-pill">
@@ -745,32 +787,133 @@ HTML_APP_SHELL = """<!DOCTYPE html>
 
     <!-- CLIENT CONTROLLER SCRIPT -->
     <script>
-        let currentRole = 'director';
+        let currentRole = localStorage.getItem('solarflow_role') || 'director';
         let activeTab = 'overview';
+        let currentTheme = localStorage.getItem('solarflow_theme') || 'dark';
+
+        // Role Access Matrix
+        const ROLE_PERMISSIONS = {
+            director: {
+                title: 'Director / Administrator',
+                name: 'Director (Executive)',
+                org: 'SunPower Executive Committee',
+                avatar: 'D',
+                defaultTab: 'overview',
+                allowedTabs: ['overview', 'operations', 'dispatch', 'sizing', 'roof', 'packages', 'crm', 'inventory', 'installations', 'warranty', 'financials', 'assistant']
+            },
+            salesperson: {
+                title: 'Sales Administrator',
+                name: 'Siddharth Rao',
+                org: 'Commercial & Residential Sales',
+                avatar: 'S',
+                defaultTab: 'crm',
+                allowedTabs: ['crm', 'roof', 'packages', 'sizing', 'assistant']
+            },
+            operations: {
+                title: 'Operations Manager',
+                name: 'Pradeep Gowda',
+                org: 'Field Operations & Dispatch',
+                avatar: 'O',
+                defaultTab: 'operations',
+                allowedTabs: ['operations', 'dispatch', 'roof', 'inventory', 'installations', 'warranty', 'assistant']
+            },
+            technician: {
+                title: 'Field Technician',
+                name: 'Suresh Patel (Lead Tech)',
+                org: 'Field Installation Team',
+                avatar: 'T',
+                defaultTab: 'installations',
+                allowedTabs: ['installations', 'roof', 'warranty']
+            }
+        };
+
+        function applyTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('solarflow_theme', theme);
+            const icon = document.getElementById('themeToggleIcon');
+            const lbl = document.getElementById('themeToggleLabel');
+            if (icon && lbl) {
+                if (theme === 'light') {
+                    icon.textContent = '🌙';
+                    lbl.textContent = 'Dark Mode';
+                } else {
+                    icon.textContent = '☀️';
+                    lbl.textContent = 'Light Mode';
+                }
+            }
+        }
+
+        function toggleTheme() {
+            const nextTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        }
+
+        function updateSidebarNavigation() {
+            const roleCfg = ROLE_PERMISSIONS[currentRole] || ROLE_PERMISSIONS.director;
+            const allowed = roleCfg.allowedTabs;
+
+            document.querySelectorAll('#sidebarNav .nav-item').forEach(item => {
+                const navKey = item.getAttribute('data-nav');
+                if (allowed.includes(navKey)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Clean up empty section headers
+            document.querySelectorAll('#sidebarNav .nav-section-label').forEach(label => {
+                let next = label.nextElementSibling;
+                let hasVisible = false;
+                while (next && !next.classList.contains('nav-section-label')) {
+                    if (next.classList.contains('nav-item') && next.style.display !== 'none') {
+                        hasVisible = true;
+                        break;
+                    }
+                    next = next.nextElementSibling;
+                }
+                label.style.display = hasVisible ? 'block' : 'none';
+            });
+        }
 
         function switchRole(role) {
+            if (!ROLE_PERMISSIONS[role]) role = 'director';
             currentRole = role;
-            const names = {
-                director: 'Director (Executive)',
-                salesperson: 'Siddharth Rao (Sales)',
-                survey_manager: 'Pradeep Gowda (Survey Mgr)',
-                warehouse: 'Kiran Reddy (Warehouse)',
-                technician: 'Suresh Patel (Lead Tech)',
-                accountant: 'Pooja Iyer (Finance)',
-                support: 'Deepa Hegde (Support)'
-            };
-            document.getElementById('loggedUserName').textContent = names[role] || 'User';
-            document.getElementById('loggedUserRole').textContent = role.toUpperCase();
-            document.getElementById('avatarLetter').textContent = (names[role] || 'U').charAt(0);
-            loadView(activeTab);
+            localStorage.setItem('solarflow_role', role);
+
+            const roleCfg = ROLE_PERMISSIONS[role];
+            document.getElementById('loggedUserName').textContent = roleCfg.name;
+            document.getElementById('loggedUserRole').textContent = roleCfg.title.toUpperCase();
+            document.getElementById('avatarLetter').textContent = roleCfg.avatar;
+            document.getElementById('roleSelector').value = role;
+
+            updateSidebarNavigation();
+
+            // Redirect automatically if current view not allowed for new role
+            if (!roleCfg.allowedTabs.includes(activeTab)) {
+                loadView(roleCfg.defaultTab);
+            } else {
+                loadView(activeTab);
+            }
         }
 
         function loadView(viewKey, element) {
-            activeTab = viewKey;
-            if (element) {
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                element.classList.add('active');
+            const roleCfg = ROLE_PERMISSIONS[currentRole] || ROLE_PERMISSIONS.director;
+            if (!roleCfg.allowedTabs.includes(viewKey)) {
+                viewKey = roleCfg.defaultTab;
             }
+
+            activeTab = viewKey;
+
+            // Highlight active nav item
+            document.querySelectorAll('#sidebarNav .nav-item').forEach(el => {
+                if (el.getAttribute('data-nav') === viewKey) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
 
             const titleMap = {
                 overview: 'Executive Overview',
@@ -793,10 +936,24 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             container.innerHTML = `<div style="text-align: center; padding: 60px; color: var(--text-dim);">Loading authentic ERP ledgers...</div>`;
 
             fetch('/api/' + viewKey + '?role=' + currentRole)
-                .then(r => r.json())
+                .then(r => {
+                    if (r.status === 403) {
+                        return r.json().then(d => { throw new Error(d.error || 'Access Denied: Forbidden role request'); });
+                    }
+                    if (!r.ok) {
+                        throw new Error(`HTTP Error ${r.status}`);
+                    }
+                    return r.json();
+                })
                 .then(data => renderView(viewKey, data))
                 .catch(err => {
-                    container.innerHTML = `<div style="color: var(--accent-red); padding: 24px;">Failed to load view: ${err.message}</div>`;
+                    container.innerHTML = `
+                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 24px; color: var(--accent-red); margin: 20px 0;">
+                            <div style="font-weight: 800; font-size: 1rem; margin-bottom: 6px;">⛔ Access Restricted by Odoo 17 Security Matrix</div>
+                            <div>${err.message}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 8px;">Role: <strong>${roleCfg.title}</strong> cannot perform or view this operation without elevated permissions.</div>
+                        </div>
+                    `;
                 });
         }
 
@@ -2145,9 +2302,10 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             }
         });
 
-        // Initialize on load
+        // Initialize on load with saved or default role and theme
         window.onload = function() {
-            loadView('overview', document.querySelector('.nav-item.active'));
+            applyTheme(currentTheme);
+            switchRole(currentRole);
         };
     </script>
 </body>
@@ -2279,8 +2437,20 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
         elif parsed.path == '/api/installations':
             inst_enriched = []
             for i in DATA.installations:
+                # Role-based row-level security: Technicians only see their own assigned jobs
+                if role == 'technician' and i.get('technician_id') != 2:
+                    continue
                 cust = next((p['name'] for p in DATA.partners if p['id'] == i['partner_id']), 'Customer')
-                inst_enriched.append({**i, 'customer_name': cust})
+                inst_dict = {**i, 'customer_name': cust}
+                # Field-level security: strip company financial margins for non-directors/non-executives
+                if role in ('technician', 'salesperson'):
+                    inst_dict.pop('material_cost', None)
+                    inst_dict.pop('labour_cost', None)
+                    inst_dict.pop('other_cost', None)
+                    inst_dict.pop('total_cost', None)
+                    inst_dict.pop('gross_profit', None)
+                    inst_dict.pop('gross_margin_pct', None)
+                inst_enriched.append(inst_dict)
             self.send_json({'installations': inst_enriched})
 
         elif parsed.path in ('/api/warranty', '/api/warranties'):
@@ -2295,6 +2465,9 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'warranties': w_enriched, 'tickets': t_enriched})
 
         elif parsed.path == '/api/financials':
+            if role in ('technician', 'salesperson'):
+                self.send_json({'error': f"Forbidden: Role '{role}' is not authorized to access company-wide financial ledgers or gross profit margins."}, status=403)
+                return
             inst_enriched = []
             for i in DATA.installations:
                 cust = next((p['name'] for p in DATA.partners if p['id'] == i['partner_id']), 'Customer')
@@ -2455,8 +2628,12 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json(result)
 
         elif parsed.path == '/api/survey-action':
+            role = payload.get('role', 'director')
             survey_id = payload.get('id')
             action = payload.get('action')
+            if action in ('approve', 'reject') and role not in ('director', 'operations', 'survey_manager'):
+                self.send_json({'error': f"Permission Denied: Role '{role}' cannot approve or reject site surveys."}, status=403)
+                return
             survey = next((s for s in DATA.surveys if s['id'] == survey_id), None)
             if not survey:
                 self.send_json({'error': 'Survey not found'}, status=404)
@@ -2551,6 +2728,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'status': 'success', 'ref': lead_ref})
 
         elif parsed.path == '/api/assign-technician':
+            role = payload.get('role', 'director')
+            if role not in ('director', 'operations'):
+                self.send_json({'error': f"Permission Denied: Role '{role}' cannot assign technicians or modify workforce schedule."}, status=403)
+                return
             inst_id = payload.get('installation_id')
             tech_id = payload.get('technician_id')
             inst = next((i for i in DATA.installations if i['id'] == inst_id), None)
@@ -2620,6 +2801,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json(res)
 
         elif parsed.path == '/api/reserve-stock':
+            role = payload.get('role', 'director')
+            if role in ('salesperson', 'technician'):
+                self.send_json({'error': f"Permission Denied: Role '{role}' cannot directly adjust or reserve warehouse inventory stock."}, status=403)
+                return
             inst_id = payload.get('installation_id')
             item_key = payload.get('item_key')
             qty = int(payload.get('qty', 1))

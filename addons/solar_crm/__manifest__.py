@@ -25,6 +25,7 @@ Extends the standard Odoo CRM module with solar-specific fields and workflows:
     ],
     'data': [
         'security/ir.model.access.csv',
+        'security/solar_crm_record_rules.xml',
         'views/crm_lead_views.xml',
     ],
     'installable': True,
