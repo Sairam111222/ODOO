@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16 — Odoo 17 supports PostgreSQL 12–16
+  db:
+    image: postgres:15-alpine
+    container_name: solarflow_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-solarflow}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo_secure_pw}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - solarflow_pgdata:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo} -d ${POSTGRES_DB:-solarflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Odoo 17 Community Edition
+  odoo:
+    image: odoo:17
+    container_name: solarflow_odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo_secure_pw}
+    ports:
+      - "${ODOO_HTTP_PORT:-8069}:8069"
+      - "${ODOO_LONGPOLL_PORT:-8072}:8072"
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - ./configuration/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
+      - solarflow_odoo_data:/var/lib/odoo
+      - solarflow_odoo_filestore:/var/lib/odoo/filestore
+    command: >
+      --
+      --db_host=db
+      --db_port=5432
+      --db_user=${POSTGRES_USER:-odoo}
+      --db_password=${POSTGRES_PASSWORD:-odoo_secure_pw}
+      --database=${POSTGRES_DB:-solarflow}
+      --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+      --without-demo=all
+
+volumes:
+  solarflow_pgdata:
+    driver: local
+  solarflow_odoo_data:
+    driver: local
+  solarflow_odoo_filestore:
+    driver: local

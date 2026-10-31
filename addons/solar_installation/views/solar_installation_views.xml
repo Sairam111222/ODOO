@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Installation Tree View -->
+    <record id="view_solar_installation_tree" model="ir.ui.view">
+        <field name="name">solar.installation.tree</field>
+        <field name="model">solar.installation</field>
+        <field name="arch" type="xml">
+            <tree string="Solar Installations" decoration-info="state in ('draft', 'assigned', 'scheduled')" decoration-warning="state in ('in_progress', 'testing', 'awaiting_approval')" decoration-success="state == 'commissioned'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="system_type_id"/>
+                <field name="capacity_kw"/>
+                <field name="technician_id"/>
+                <field name="scheduled_date"/>
+                <field name="contract_revenue" widget="monetary" optional="show"/>
+                <field name="gross_profit" widget="monetary" optional="show"/>
+                <field name="gross_margin_pct" widget="percentage" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state in ('draft', 'scheduled')" decoration-warning="state in ('in_progress', 'testing')" decoration-success="state in ('completed', 'commissioned')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Installation Form View -->
+    <record id="view_solar_installation_form" model="ir.ui.view">
+        <field name="name">solar.installation.form</field>
+        <field name="model">solar.installation</field>
+        <field name="arch" type="xml">
+            <form string="Solar Installation Project">
+                <header>
+                    <button name="action_assign_crew" string="Assign Technician Crew" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_schedule" string="Schedule Deployment" type="object" class="oe_highlight" invisible="state != 'assigned'"/>
+                    <button name="action_start_work" string="Start Installation" type="object" class="oe_highlight" invisible="state != 'scheduled'"/>
+                    <button name="action_start_testing" string="Commence Testing" type="object" class="oe_highlight" invisible="state != 'in_progress'"/>
+                    <button name="action_verify_testing" string="Verify Electrical Safety" type="object" class="btn-info" invisible="state != 'testing'"/>
+                    <button name="action_commission" string="Commission &amp; Activate Warranties" type="object" class="btn-success" invisible="state != 'completed'" groups="solar_core.group_solar_director,solar_core.group_solar_survey_manager"/>
+                    <button name="action_cancel" string="Cancel Project" type="object" invisible="state in ('commissioned', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,assigned,scheduled,in_progress,testing,awaiting_approval,completed,commissioned"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not weather_delay_reason">
+                        <strong>Site / Weather Delay:</strong> <field name="weather_delay_reason" readonly="1"/>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Installation Project"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Customer &amp; Commercial Linkage">
+                            <field name="partner_id"/>
+                            <field name="sale_order_id"/>
+                            <field name="survey_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="System Specs &amp; Sizing">
+                            <field name="system_type_id"/>
+                            <field name="capacity_kw"/>
+                            <field name="package_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Technician Crew &amp; Dispatch" name="crew">
+                            <group>
+                                <group string="Assigned Team (15-Technician Pool)">
+                                    <field name="technician_id"/>
+                                    <field name="helper_technician_ids" widget="many2many_tags"/>
+                                    <field name="technician_hours_logged"/>
+                                </group>
+                                <group string="Milestones &amp; Timelines">
+                                    <field name="scheduled_date"/>
+                                    <field name="actual_start_datetime" readonly="1"/>
+                                    <field name="actual_completion_datetime" readonly="1"/>
+                                    <field name="commissioning_date" readonly="1"/>
+                                    <field name="reschedule_count" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Serial Numbers &amp; Equipment Allocation" name="equipment">
+                            <field name="installation_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="component_type"/>
+                                    <field name="serial_number" placeholder="Enter Serial / Barcode"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_cost" widget="monetary"/>
+                                    <field name="cost_subtotal" widget="monetary"/>
+                                    <field name="status"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Electrical Safety, Testing &amp; Grid Sync" name="testing">
+                            <group>
+                                <group string="Measurements &amp; Safety Compliance">
+                                    <field name="dc_voltage_measured"/>
+                                    <field name="ac_voltage_measured"/>
+                                    <field name="grid_frequency_hz"/>
+                                    <field name="earthing_resistance_ohms"/>
+                                    <field name="testing_passed" readonly="1"/>
+                                </group>
+                                <group string="Net Metering &amp; DISCOM Sync">
+                                    <field name="net_meter_installed"/>
+                                    <field name="net_meter_number" invisible="not net_meter_installed"/>
+                                    <field name="discom_inspection_passed"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Customer Acceptance &amp; Sign-off" name="signoff">
+                            <group>
+                                <group string="Signatory &amp; Rating">
+                                    <field name="customer_signoff_name"/>
+                                    <field name="customer_signoff_date" readonly="1"/>
+                                    <field name="customer_satisfaction_rating"/>
+                                </group>
+                                <group string="Sign-Off Walkthrough Feedback">
+                                    <field name="signoff_notes" placeholder="Remarks recorded during customer walkthrough and handover..."/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Job Profitability &amp; Financials" name="financials" groups="solar_core.group_solar_accountant,solar_core.group_solar_director">
+                            <group>
+                                <group string="Contracted Revenue &amp; Cash Flow">
+                                    <field name="contract_revenue" widget="monetary"/>
+                                    <field name="invoiced_amount" widget="monetary"/>
+                                    <field name="cash_received" widget="monetary"/>
+                                    <field name="outstanding_receivable" widget="monetary"/>
+                                </group>
+                                <group string="Cost Structure &amp; Gross Margin">
+                                    <field name="material_cost" widget="monetary"/>
+                                    <field name="labour_cost" widget="monetary"/>
+                                    <field name="other_expenses" widget="monetary"/>
+                                    <field name="total_cost" class="oe_subtotal_footer_separator" widget="monetary"/>
+                                    <field name="gross_profit" class="oe_subtotal_footer_separator" widget="monetary"/>
+                                    <field name="gross_margin_pct"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Installation Remarks" name="notes">
+                            <field name="notes" placeholder="General project notes, safety precautions, cable trenching..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action & Menu -->
+    <record id="action_solar_installation" model="ir.actions.act_window">
+        <field name="name">Solar Installations</field>
+        <field name="res_model">solar.installation</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Manage rooftop solar installation operations</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_solar_installation_act"
+              name="All Installations"
+              parent="solar_core.menu_solar_installations"
+              action="action_solar_installation"
+              sequence="10"/>
+</odoo>

@@ -1,0 +1,65 @@
+# =============================================================================
+# SolarFlow 360 — Git Ignore
+# =============================================================================
+
+# --- Environment & Secrets ---
+.env
+*.env.local
+.env.production
+.env.staging
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+venv/
+.venv/
+env/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Odoo ---
+*.pyc
+filestore/
+sessions/
+*.log
+
+# --- Node (for OWL/JS builds if needed) ---
+node_modules/
+
+# --- Test artifacts ---
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# --- Backup ---
+*.bak
+*.sql
+*.dump
+

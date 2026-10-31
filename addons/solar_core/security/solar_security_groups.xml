@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    ==========================================================================
+    SolarFlow 360 — Security Groups
+    ==========================================================================
+    Defines the role-based access control hierarchy for the solar ERP.
+
+    Hierarchy (implied groups = inherits from):
+      Technician < Surveyor < Salesperson < Survey Manager < Director < Admin
+      Support Agent (standalone, no financial access)
+      Accountant (standalone, financial access)
+      Warehouse Manager (inherits stock.group_stock_manager)
+    ==========================================================================
+    -->
+
+    <!-- Module Category -->
+    <record id="module_category_solar" model="ir.module.category">
+        <field name="name">SolarFlow 360</field>
+        <field name="description">Solar Installation Management ERP</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- ======== ROLE: Technician ======== -->
+    <record id="group_solar_technician" model="res.groups">
+        <field name="name">Technician</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="comment">
+            Field technician: can view assigned installations,
+            update installation progress, log work hours, upload photos.
+            Cannot access financial data or other technicians' records.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Surveyor ======== -->
+    <record id="group_solar_surveyor" model="res.groups">
+        <field name="name">Surveyor</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_technician'))]"/>
+        <field name="comment">
+            Site surveyor: can create and manage site surveys,
+            upload survey reports and photos, view customer property details.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Salesperson ======== -->
+    <record id="group_solar_salesperson" model="res.groups">
+        <field name="name">Salesperson</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_surveyor'))]"/>
+        <field name="comment">
+            Salesperson: can manage CRM leads, create quotations,
+            view customer data, request surveys. Inherits surveyor access.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Survey Manager ======== -->
+    <record id="group_solar_survey_manager" model="res.groups">
+        <field name="name">Survey Manager</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_salesperson'))]"/>
+        <field name="comment">
+            Survey manager: can assign surveyors, approve surveys,
+            manage survey schedules. Inherits salesperson access.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Support Agent ======== -->
+    <record id="group_solar_support_agent" model="res.groups">
+        <field name="name">Support Agent</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="comment">
+            Support agent: can create and manage service tickets,
+            view customer installations and warranties.
+            Cannot access financial data or modify payment records.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Warehouse Manager ======== -->
+    <record id="group_solar_warehouse_manager" model="res.groups">
+        <field name="name">Warehouse Manager</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[(4, ref('stock.group_stock_manager'))]"/>
+        <field name="comment">
+            Warehouse manager: full inventory access including
+            serial number tracking, stock moves, purchase receipts.
+            Cannot modify financial records.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Accountant ======== -->
+    <record id="group_solar_accountant" model="res.groups">
+        <field name="name">Accountant</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[(4, ref('account.group_account_user'))]"/>
+        <field name="comment">
+            Accountant: full access to invoices, payments, financial reports.
+            Can view installation costs for profitability analysis.
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Director ======== -->
+    <record id="group_solar_director" model="res.groups">
+        <field name="name">Director</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[
+            (4, ref('group_solar_survey_manager')),
+            (4, ref('group_solar_accountant')),
+            (4, ref('group_solar_warehouse_manager')),
+            (4, ref('group_solar_support_agent')),
+        ]"/>
+        <field name="comment">
+            Director: full access to all solar operations,
+            dashboards, reports, and business analytics.
+            Cannot modify system configuration (that is Admin only).
+        </field>
+    </record>
+
+    <!-- ======== ROLE: Administrator ======== -->
+    <record id="group_solar_admin" model="res.groups">
+        <field name="name">Solar Administrator</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[(4, ref('group_solar_director'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">
+            Full system administrator: all solar permissions plus
+            system configuration, user management, module installation.
+        </field>
+    </record>
+
+</odoo>
+

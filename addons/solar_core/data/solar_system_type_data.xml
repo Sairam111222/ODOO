@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    SolarFlow 360 — Solar System Type Reference Data
+    -->
+    <data noupdate="1">
+
+        <!-- System Types -->
+        <record id="system_type_ongrid" model="solar.system.type">
+            <field name="name">On-Grid</field>
+            <field name="code">ONGRID</field>
+            <field name="description">Grid-tied solar system. Excess power is exported to the grid via net metering. No battery storage.</field>
+        </record>
+        <record id="system_type_offgrid" model="solar.system.type">
+            <field name="name">Off-Grid</field>
+            <field name="code">OFFGRID</field>
+            <field name="description">Standalone solar system with battery storage. Not connected to the electricity grid.</field>
+        </record>
+        <record id="system_type_hybrid" model="solar.system.type">
+            <field name="name">Hybrid</field>
+            <field name="code">HYBRID</field>
+            <field name="description">Grid-connected solar system with battery backup. Provides power during grid outages.</field>
+        </record>
+
+    </data>
+</odoo>
+

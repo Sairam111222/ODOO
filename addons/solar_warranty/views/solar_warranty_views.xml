@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Warranty Tree View -->
+    <record id="view_solar_warranty_tree" model="ir.ui.view">
+        <field name="name">solar.warranty.tree</field>
+        <field name="model">solar.warranty</field>
+        <field name="arch" type="xml">
+            <tree string="Warranties" decoration-success="state == 'active'" decoration-warning="state == 'expiring_soon'" decoration-danger="state in ('expired', 'claimed')" decoration-muted="state == 'void'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="installation_id"/>
+                <field name="warranty_type"/>
+                <field name="serial_number"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="claim_count" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-warning="state == 'expiring_soon'" decoration-danger="state in ('expired', 'claimed')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Warranty Form View -->
+    <record id="view_solar_warranty_form" model="ir.ui.view">
+        <field name="name">solar.warranty.form</field>
+        <field name="model">solar.warranty</field>
+        <field name="arch" type="xml">
+            <form string="Solar Warranty Certificate">
+                <header>
+                    <button name="action_log_claim" string="Flag Active Claim" type="object" class="btn-warning" invisible="state in ('claimed', 'void')"/>
+                    <button name="action_void" string="Void Warranty" type="object" class="btn-danger" invisible="state in ('expired', 'void')" groups="solar_core.group_solar_director"/>
+                    <field name="state" widget="statusbar" statusbar_visible="active,expiring_soon,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Warranty Certificate"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Coverage Beneficiary">
+                            <field name="partner_id"/>
+                            <field name="installation_id"/>
+                            <field name="policy_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Guarantee Terms &amp; Serial">
+                            <field name="warranty_type"/>
+                            <field name="serial_number"/>
+                            <field name="duration_years"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="claim_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Terms &amp; Coverage Clauses" name="terms">
+                            <field name="terms" placeholder="Explicit terms regarding performance degradation thresholds, manufacturer terms, exclusions..."/>
+                        </page>
+                        <page string="Claims &amp; Replacement History" name="replacements">
+                            <field name="replacement_notes" placeholder="RMA details, replaced serial numbers, technician diagnostic notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Warranty Policy Views -->
+    <record id="view_solar_warranty_policy_tree" model="ir.ui.view">
+        <field name="name">solar.warranty.policy.tree</field>
+        <field name="model">solar.warranty.policy</field>
+        <field name="arch" type="xml">
+            <tree string="Warranty Policies">
+                <field name="name"/>
+                <field name="component_type"/>
+                <field name="standard_duration_years"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_solar_warranty_policy_form" model="ir.ui.view">
+        <field name="name">solar.warranty.policy.form</field>
+        <field name="model">solar.warranty.policy</field>
+        <field name="arch" type="xml">
+            <form string="Warranty Policy Master">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Policy Title"/>
+                        <h1><field name="name" placeholder="e.g. 25-Yr Tier 1 Solar Panel Warranty"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="component_type"/>
+                            <field name="standard_duration_years"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Coverage &amp; Exclusions">
+                            <group>
+                                <field name="coverage_scope"/>
+                                <field name="exclusions"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions & Menus -->
+    <record id="action_solar_warranty" model="ir.actions.act_window">
+        <field name="name">Solar Warranties</field>
+        <field name="res_model">solar.warranty</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_solar_warranty_policy" model="ir.actions.act_window">
+        <field name="name">Warranty Policies</field>
+        <field name="res_model">solar.warranty.policy</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_solar_warranty_act"
+              name="All Warranties"
+              parent="solar_core.menu_solar_warranties"
+              action="action_solar_warranty"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_warranty_policy_act"
+              name="Warranty Policies Master"
+              parent="solar_core.menu_solar_warranties"
+              action="action_solar_warranty_policy"
+              sequence="20"
+              groups="solar_core.group_solar_director"/>
+</odoo>

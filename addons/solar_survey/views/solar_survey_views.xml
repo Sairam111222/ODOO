@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Solar Site Survey Tree View -->
+    <record id="view_solar_site_survey_tree" model="ir.ui.view">
+        <field name="name">solar.site.survey.tree</field>
+        <field name="model">solar.site.survey</field>
+        <field name="arch" type="xml">
+            <tree string="Site Surveys" decoration-info="state in ('draft', 'scheduled')" decoration-warning="state in ('in_progress', 'submitted')" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="surveyor_id"/>
+                <field name="survey_date"/>
+                <field name="property_type"/>
+                <field name="roof_area_sqft"/>
+                <field name="recommended_capacity_kw" string="Recommended (kW)"/>
+                <field name="revision_count" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state in ('draft', 'scheduled')" decoration-warning="state in ('in_progress', 'submitted')" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Solar Site Survey Form View -->
+    <record id="view_solar_site_survey_form" model="ir.ui.view">
+        <field name="name">solar.site.survey.form</field>
+        <field name="model">solar.site.survey</field>
+        <field name="arch" type="xml">
+            <form string="Site Survey">
+                <header>
+                    <button name="action_schedule" string="Schedule Survey" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_start" string="Start Survey" type="object" class="oe_highlight" invisible="state != 'scheduled'"/>
+                    <button name="action_submit_for_approval" string="Submit for Approval" type="object" class="oe_highlight" invisible="state != 'in_progress'"/>
+                    <button name="action_approve" string="Approve Survey" type="object" class="btn-success" invisible="state != 'submitted'" groups="solar_core.group_solar_survey_manager,solar_core.group_solar_director"/>
+                    <button name="action_reject" string="Reject Survey" type="object" class="btn-danger" invisible="state != 'submitted'" groups="solar_core.group_solar_survey_manager,solar_core.group_solar_director"/>
+                    <button name="action_resurvey" string="Initiate Re-Survey" type="object" class="btn-warning" invisible="state not in ('rejected', 'approved')"/>
+                    <button name="action_generate_quotation" string="Generate Quotation" type="object" class="btn-primary" invisible="state != 'approved'" groups="solar_core.group_solar_salesperson,solar_core.group_solar_director"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object" invisible="state not in ('cancelled')"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state in ('approved', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Linked Quotation Stat Button -->
+                        <button name="action_generate_quotation" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="not sale_order_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Quotation</span>
+                                <span class="o_stat_value"><field name="sale_order_id"/></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <strong>Survey Rejected:</strong> <field name="rejection_reason" readonly="1"/>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Survey Reference"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                            <span class="text-muted" invisible="revision_count &lt;= 1"> (Rev #<field name="revision_count"/>)</span>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Customer &amp; Assignment">
+                            <field name="partner_id"/>
+                            <field name="surveyor_id"/>
+                            <field name="original_survey_id" invisible="not original_survey_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Schedule &amp; Dates">
+                            <field name="survey_date"/>
+                            <field name="scheduled_date"/>
+                            <field name="sale_order_id" readonly="1" invisible="not sale_order_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Roof &amp; Structural Inspection" name="roof_structural">
+                            <group>
+                                <group string="Roof Characteristics">
+                                    <field name="property_type"/>
+                                    <field name="roof_type"/>
+                                    <field name="roof_condition"/>
+                                    <field name="roof_orientation"/>
+                                    <field name="roof_tilt_degrees"/>
+                                </group>
+                                <group string="Area &amp; Cabling Route">
+                                    <field name="roof_area_sqft"/>
+                                    <field name="available_area_sqft"/>
+                                    <field name="shading_analysis"/>
+                                    <field name="cable_distance_meters"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Electrical &amp; Grid Feasibility" name="electrical">
+                            <group>
+                                <group string="DISCOM Connection">
+                                    <field name="meter_type"/>
+                                    <field name="grid_feasibility"/>
+                                    <field name="electricity_provider"/>
+                                    <field name="consumer_number"/>
+                                </group>
+                                <group string="Load &amp; Monthly Billing">
+                                    <field name="sanctioned_load_kw"/>
+                                    <field name="existing_load_kw"/>
+                                    <field name="avg_monthly_bill"/>
+                                    <field name="avg_monthly_consumption_kwh"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="System Sizing Recommendations" name="recommendations">
+                            <group>
+                                <group string="Engineered Sizing">
+                                    <field name="recommended_system_type_id"/>
+                                    <field name="recommended_capacity_kw"/>
+                                </group>
+                                <group string="Estimated Financial Returns">
+                                    <field name="estimated_generation_kwh_month"/>
+                                    <field name="estimated_savings_monthly"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Technical Observations" name="observations">
+                            <field name="survey_notes" placeholder="Obstacles (water tanks, vents, chimneys), structure elevation needs, cable tray routes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_solar_site_survey_search" model="ir.ui.view">
+        <field name="name">solar.site.survey.search</field>
+        <field name="model">solar.site.survey</field>
+        <field name="arch" type="xml">
+            <search string="Search Site Surveys">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="surveyor_id"/>
+                <filter string="My Surveys" name="my_surveys" domain="[('surveyor_id', '=', uid)]"/>
+                <filter string="Submitted (Pending Approval)" name="pending_approval" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Approved" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Rejected" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Surveyor" name="group_surveyor" context="{'group_by': 'surveyor_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action & Menu -->
+    <record id="action_solar_site_survey" model="ir.actions.act_window">
+        <field name="name">Site Surveys</field>
+        <field name="res_model">solar.site.survey</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_solar_site_survey_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record your first Solar Site Survey</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_solar_site_survey_act"
+              name="All Surveys"
+              parent="solar_core.menu_solar_surveys"
+              action="action_solar_site_survey"
+              sequence="10"/>
+</odoo>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit CRM lead form -->
+    <record id="view_crm_lead_form_solar" model="ir.ui.view">
+        <field name="name">crm.lead.form.solar</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_schedule_solar_followup"
+                        string="Schedule 48h Follow-up"
+                        type="object"
+                        class="btn-secondary"
+                        groups="solar_core.group_solar_salesperson"/>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-2" role="alert" invisible="not is_duplicate_lead">
+                    <strong>Notice:</strong> Potential duplicate customer enquiry detected matching existing phone, mobile, or email records.
+                </div>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Solar System Requirements" name="solar_details">
+                    <group>
+                        <group string="Enquiry Channel &amp; Property">
+                            <field name="solar_lead_source"/>
+                            <field name="customer_type"/>
+                            <field name="property_type"/>
+                            <field name="grid_preference"/>
+                            <field name="customer_requirements"/>
+                        </group>
+                        <group string="Feasibility &amp; Sizing Preferences">
+                            <field name="estimated_system_type_id"/>
+                            <field name="estimated_capacity_kw"/>
+                            <field name="monthly_electricity_bill"/>
+                            <field name="roof_area_sqft"/>
+                            <field name="is_duplicate_lead" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Installation Site Address">
+                        <group>
+                            <field name="installation_street"/>
+                            <field name="installation_city"/>
+                            <field name="installation_zip"/>
+                        </group>
+                        <group string="Duplicate Match Details" invisible="not is_duplicate_lead">
+                            <field name="duplicate_lead_ids" widget="many2many_tags" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Site Survey Handover">
+                        <field name="survey_id"/>
+                        <field name="survey_state" invisible="not survey_id"/>
+                        <button name="action_create_survey"
+                                type="object"
+                                string="Generate Site Survey Request"
+                                class="btn-primary"
+                                invisible="survey_id"
+                                groups="solar_core.group_solar_salesperson"/>
+                    </group>
+                    <group string="Cancellation / Lost Tracking" invisible="active">
+                        <field name="solar_lost_reason"/>
+                        <field name="solar_lost_notes"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search filter for solar leads -->
+    <record id="view_crm_lead_search_solar" model="ir.ui.view">
+        <field name="name">crm.lead.search.solar</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[1]" position="before">
+                <separator/>
+                <filter string="Residential" name="filter_residential" domain="[('customer_type', '=', 'residential')]"/>
+                <filter string="Commercial" name="filter_commercial" domain="[('customer_type', '=', 'commercial')]"/>
+                <separator/>
+                <filter string="Potential Duplicates" name="filter_duplicates" domain="[('is_duplicate_lead', '=', True)]"/>
+                <filter string="Has Survey" name="filter_has_survey" domain="[('survey_id', '!=', False)]"/>
+                <filter string="No Survey" name="filter_no_survey" domain="[('survey_id', '=', False)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Menu Actions -->
+    <record id="action_solar_crm_leads" model="ir.actions.act_window">
+        <field name="name">Solar Leads</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">tree,kanban,form,pivot,graph</field>
+        <field name="context">{'default_type': 'lead'}</field>
+    </record>
+
+    <menuitem id="menu_solar_crm_leads"
+              name="Solar Leads"
+              parent="solar_core.menu_solar_crm"
+              action="action_solar_crm_leads"
+              sequence="10"/>
+
+    <record id="action_solar_crm_pipeline" model="ir.actions.act_window">
+        <field name="name">Solar Pipeline</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">kanban,tree,form,pivot,graph</field>
+        <field name="context">{'default_type': 'opportunity'}</field>
+    </record>
+
+    <menuitem id="menu_solar_crm_pipeline"
+              name="Solar Pipeline"
+              parent="solar_core.menu_solar_crm"
+              action="action_solar_crm_pipeline"
+              sequence="20"/>
+</odoo>

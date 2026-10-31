@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subsidy Tracker Tree View -->
+    <record id="view_solar_subsidy_tracker_tree" model="ir.ui.view">
+        <field name="name">solar.subsidy.tracker.tree</field>
+        <field name="model">solar.subsidy.tracker</field>
+        <field name="arch" type="xml">
+            <tree string="Government Subsidy Trackers" decoration-info="state in ('draft', 'documents_collected')" decoration-warning="state in ('submitted', 'inspection_scheduled')" decoration-success="state in ('approved', 'disbursed')" decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="installation_id"/>
+                <field name="national_portal_app_number"/>
+                <field name="responsible_employee_id"/>
+                <field name="submission_date"/>
+                <field name="missing_documents"/>
+                <field name="state" widget="badge" decoration-info="state in ('draft', 'documents_collected')" decoration-warning="state in ('submitted', 'inspection_scheduled')" decoration-success="state in ('approved', 'disbursed')" decoration-danger="state == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Subsidy Tracker Form View -->
+    <record id="view_solar_subsidy_tracker_form" model="ir.ui.view">
+        <field name="name">solar.subsidy.tracker.form</field>
+        <field name="model">solar.subsidy.tracker</field>
+        <field name="arch" type="xml">
+            <form string="Government Subsidy Dossier">
+                <header>
+                    <button name="action_verify_documents" string="Verify Collected Docs" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_submit_portal" string="Mark Submitted to Portal" type="object" class="oe_highlight" invisible="state != 'documents_collected'"/>
+                    <button name="action_schedule_inspection" string="Schedule DISCOM Inspection" type="object" class="btn-info" invisible="state != 'submitted'"/>
+                    <button name="action_approve_subsidy" string="Record Subsidy Approval" type="object" class="btn-success" invisible="state != 'inspection_scheduled'"/>
+                    <button name="action_disburse_subsidy" string="Confirm DBT Disbursal" type="object" class="btn-success" invisible="state != 'approved'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,documents_collected,submitted,inspection_scheduled,approved,disbursed"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="state in ('approved', 'disbursed')">
+                        <strong>Dossier Status:</strong> <field name="missing_documents" readonly="1"/>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Subsidy Dossier #"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Beneficiary &amp; Scheme">
+                            <field name="partner_id"/>
+                            <field name="installation_id"/>
+                            <field name="subsidy_scheme"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Application References &amp; Liaison">
+                            <field name="national_portal_app_number" placeholder="e.g. MNRE-2026-XXXX"/>
+                            <field name="discom_application_number" placeholder="e.g. APDCL-NM-XXXX"/>
+                            <field name="responsible_employee_id"/>
+                            <field name="submission_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Mandatory Document Checklist" name="checklist">
+                            <group>
+                                <group string="Customer Proofs">
+                                    <field name="has_aadhaar_card"/>
+                                    <field name="has_electricity_bill"/>
+                                    <field name="has_bank_passbook"/>
+                                </group>
+                                <group string="Technical Proofs">
+                                    <field name="has_roof_ownership_proof"/>
+                                    <field name="has_commissioning_certificate"/>
+                                    <field name="has_dcr_certificate"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Subsidy Entitlement (Direct to Customer)" name="financials">
+                            <group>
+                                <group>
+                                    <field name="estimated_subsidy_amount" widget="monetary"/>
+                                    <field name="approved_subsidy_amount" widget="monetary"/>
+                                </group>
+                                <group>
+                                    <field name="approval_date" readonly="1"/>
+                                    <field name="disbursement_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Exceptions &amp; Next Actions" name="actions">
+                            <group>
+                                <field name="rejection_reason" placeholder="Reasons for rejection / query raised by DISCOM..."/>
+                                <field name="pending_actions" placeholder="Next operational steps required from customer or liaison agent..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action & Menu -->
+    <record id="action_solar_subsidy_tracker" model="ir.actions.act_window">
+        <field name="name">Government Subsidy Tracking</field>
+        <field name="res_model">solar.subsidy.tracker</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Manage government solar subsidy applications &amp; paperwork</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_solar_subsidy_tracker_act"
+              name="Government Subsidy"
+              parent="solar_core.menu_solar_root"
+              action="action_solar_subsidy_tracker"
+              sequence="85"/>
+</odoo>
+

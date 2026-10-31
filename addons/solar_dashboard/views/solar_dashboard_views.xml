@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Executive KPI Dashboard Form View -->
+    <record id="view_solar_executive_dashboard_form" model="ir.ui.view">
+        <field name="name">solar.executive.dashboard.form</field>
+        <field name="model">solar.executive.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Director Executive Overview" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>SunPower Solutions — Executive Operations &amp; Profitability Control Center</h2>
+                    </div>
+                    <group string="Customer Inquiries &amp; Pipeline Conversion">
+                        <group>
+                            <field name="total_enquiries"/>
+                            <field name="qualified_leads"/>
+                        </group>
+                        <group>
+                            <field name="lead_conversion_rate" widget="percentage"/>
+                        </group>
+                    </group>
+                    <group string="Installation Throughput (~40 Installs/Month Run-Rate)">
+                        <group>
+                            <field name="active_installations"/>
+                            <field name="completed_installations"/>
+                            <field name="total_capacity_installed_kw"/>
+                        </group>
+                        <group>
+                            <field name="delayed_installations"/>
+                            <field name="pending_surveys"/>
+                            <field name="pending_survey_approvals"/>
+                        </group>
+                    </group>
+                    <group string="Financial Cash Flow &amp; Profitability">
+                        <group>
+                            <field name="contracted_revenue" widget="monetary"/>
+                            <field name="invoiced_revenue" widget="monetary"/>
+                            <field name="cash_collected" widget="monetary"/>
+                            <field name="outstanding_receivables" widget="monetary"/>
+                        </group>
+                        <group>
+                            <field name="total_project_cost" widget="monetary"/>
+                            <field name="net_gross_profit" widget="monetary"/>
+                            <field name="average_gross_margin_pct" widget="percentage"/>
+                        </group>
+                    </group>
+                    <group string="Customer Care &amp; Subsidy Compliance">
+                        <group>
+                            <field name="open_service_tickets"/>
+                            <field name="active_warranty_claims"/>
+                        </group>
+                        <group>
+                            <field name="pending_subsidy_dossiers"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Global Search Wizard Form View -->
+    <record id="view_solar_global_search_wizard_form" model="ir.ui.view">
+        <field name="name">solar.global.search.wizard.form</field>
+        <field name="model">solar.global.search.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Enterprise Solar Search">
+                <sheet>
+                    <group>
+                        <field name="query" placeholder="Enter Customer Name, Phone, Email, Serial #, Order Ref..."/>
+                    </group>
+                    <footer>
+                        <button name="action_execute_search" string="Search All Records" type="object" class="btn-primary"/>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                    <notebook invisible="not query">
+                        <page string="Matching Customers">
+                            <field name="partner_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="phone"/>
+                                    <field name="email"/>
+                                    <field name="customer_type"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Matching Installations">
+                            <field name="installation_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="capacity_kw"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Matching Warranties">
+                            <field name="warranty_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="serial_number"/>
+                                    <field name="end_date"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Matching Service Tickets">
+                            <field name="ticket_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="ticket_type"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Installation Graphs & Pivot Views -->
+    <record id="view_solar_installation_dashboard_graph" model="ir.ui.view">
+        <field name="name">solar.installation.graph</field>
+        <field name="model">solar.installation</field>
+        <field name="arch" type="xml">
+            <graph string="Monthly Commissioned Capacity (kW)" type="bar" sample="1">
+                <field name="scheduled_date" interval="month"/>
+                <field name="capacity_kw" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_solar_installation_dashboard_pivot" model="ir.ui.view">
+        <field name="name">solar.installation.pivot</field>
+        <field name="model">solar.installation</field>
+        <field name="arch" type="xml">
+            <pivot string="Installation &amp; Capacity Analytics" sample="1">
+                <field name="system_type_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="capacity_kw" type="measure"/>
+                <field name="gross_profit" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Actions & Menus -->
+    <record id="action_solar_executive_dashboard" model="ir.actions.act_window">
+        <field name="name">Operations KPI</field>
+        <field name="res_model">solar.installation</field>
+        <field name="view_mode">graph,pivot,tree</field>
+        <field name="view_id" ref="view_solar_installation_dashboard_graph"/>
+        <field name="domain">[('state', '!=', 'cancelled')]</field>
+    </record>
+
+    <record id="action_solar_global_search" model="ir.actions.act_window">
+        <field name="name">Enterprise Global Search</field>
+        <field name="res_model">solar.global.search.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_solar_dashboard_act"
+              name="Operations KPI"
+              parent="solar_core.menu_solar_dashboard"
+              action="action_solar_executive_dashboard"
+              sequence="10"/>
+
+    <menuitem id="menu_solar_global_search_act"
+              name="Global Search"
+              parent="solar_core.menu_solar_dashboard"
+              action="action_solar_global_search"
+              sequence="20"/>
+</odoo>

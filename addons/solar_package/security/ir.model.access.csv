@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_solar_package_technician,solar.package.technician,model_solar_package,solar_core.group_solar_technician,1,0,0,0
+access_solar_package_salesperson,solar.package.salesperson,model_solar_package,solar_core.group_solar_salesperson,1,0,0,0
+access_solar_package_manager,solar.package.manager,model_solar_package,solar_core.group_solar_director,1,1,1,1
+access_solar_package_line_salesperson,solar.package.line.salesperson,model_solar_package_line,solar_core.group_solar_salesperson,1,0,0,0
+access_solar_package_line_director,solar.package.line.director,model_solar_package_line,solar_core.group_solar_director,1,1,1,1
+

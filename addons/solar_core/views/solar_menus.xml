@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    ==========================================================================
+    SolarFlow 360 — Top-Level Menu Structure
+    ==========================================================================
+    Provides a single "SolarFlow" root menu visible to all solar roles.
+    Child menus are contributed by each solar_* addon module.
+    ==========================================================================
+    -->
+
+    <!-- Root Menu -->
+    <menuitem id="menu_solar_root"
+              name="SolarFlow"
+              web_icon="solar_core,static/description/icon.png"
+              sequence="5"
+              groups="solar_core.group_solar_technician,solar_core.group_solar_support_agent,solar_core.group_solar_accountant,solar_core.group_solar_warehouse_manager"/>
+
+    <!-- Level 1 Sub-Menus (placeholders — actions contributed by child modules) -->
+    <menuitem id="menu_solar_dashboard"
+              name="Dashboard"
+              parent="menu_solar_root"
+              sequence="10"
+              groups="solar_core.group_solar_salesperson"/>
+
+    <menuitem id="menu_solar_crm"
+              name="CRM &amp; Leads"
+              parent="menu_solar_root"
+              sequence="20"
+              groups="solar_core.group_solar_salesperson"/>
+
+    <menuitem id="menu_solar_surveys"
+              name="Site Surveys"
+              parent="menu_solar_root"
+              sequence="30"
+              groups="solar_core.group_solar_surveyor"/>
+
+    <menuitem id="menu_solar_packages"
+              name="Solar Packages"
+              parent="menu_solar_root"
+              sequence="40"
+              groups="solar_core.group_solar_salesperson"/>
+
+    <menuitem id="menu_solar_installations"
+              name="Installations"
+              parent="menu_solar_root"
+              sequence="50"
+              groups="solar_core.group_solar_technician"/>
+
+    <menuitem id="menu_solar_warranties"
+              name="Warranties"
+              parent="menu_solar_root"
+              sequence="60"
+              groups="solar_core.group_solar_salesperson"/>
+
+    <menuitem id="menu_solar_service"
+              name="Service &amp; Support"
+              parent="menu_solar_root"
+              sequence="70"
+              groups="solar_core.group_solar_support_agent"/>
+
+    <menuitem id="menu_solar_config"
+              name="Configuration"
+              parent="menu_solar_root"
+              sequence="100"
+              groups="solar_core.group_solar_director"/>
+
+</odoo>
+

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend Portal Home with Solar Cards -->
+    <template id="portal_my_home_solar" name="Show Solar in Portal Home" inherit_id="portal.portal_my_home" priority="25">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Solar Installations</t>
+                <t t-set="url" t-value="'/my/solar/installations'"/>
+                <t t-set="placeholder_count" t-value="'solar_installation_count'"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Solar Warranties</t>
+                <t t-set="url" t-value="'/my/solar/warranties'"/>
+                <t t-set="placeholder_count" t-value="'solar_warranty_count'"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Service Tickets</t>
+                <t t-set="url" t-value="'/my/solar/tickets'"/>
+                <t t-set="placeholder_count" t-value="'solar_ticket_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Installations List Template -->
+    <template id="portal_my_solar_installations" name="My Solar Installations">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Reference</th>
+                        <th>System Type</th>
+                        <th>Capacity (kW)</th>
+                        <th>Scheduled Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="installations" t-as="inst">
+                        <tr>
+                            <td><span t-field="inst.name"/></td>
+                            <td><span t-field="inst.system_type_id.name"/></td>
+                            <td><span t-field="inst.capacity_kw"/> kW</td>
+                            <td><span t-field="inst.scheduled_date"/></td>
+                            <td><span class="badge rounded-pill text-bg-info" t-field="inst.state"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- Warranties List Template -->
+    <template id="portal_my_solar_warranties" name="My Solar Warranties">
+        <t t-call="portal.portal_layout">
+            <t t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Certificate #</th>
+                        <th>Warranty Type</th>
+                        <th>Serial Number</th>
+                        <th>Expiry Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="warranties" t-as="w">
+                        <tr>
+                            <td><span t-field="w.name"/></td>
+                            <td><span t-field="w.warranty_type"/></td>
+                            <td><span t-field="w.serial_number"/></td>
+                            <td><span t-field="w.end_date"/></td>
+                            <td><span class="badge rounded-pill text-bg-success" t-field="w.state"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- Tickets List Template -->
+    <template id="portal_my_solar_tickets" name="My Service Tickets">
+        <t t-call="portal.portal_layout">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>My Solar Service &amp; Breakdown Tickets</h3>
+                <a href="/my/solar/ticket/new" class="btn btn-primary">Log New Complaint</a>
+            </div>
+            <t t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Ticket #</th>
+                        <th>Category</th>
+                        <th>Logged Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="tickets" t-as="t">
+                        <tr>
+                            <td><span t-field="t.name"/></td>
+                            <td><span t-field="t.ticket_type"/></td>
+                            <td><span t-field="t.create_date"/></td>
+                            <td><span class="badge rounded-pill text-bg-primary" t-field="t.state"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- New Ticket Submission Form Template -->
+    <template id="portal_solar_new_ticket" name="Submit Service Ticket">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <h3>Submit Solar Breakdown or Maintenance Complaint</h3>
+                <t t-if="error">
+                    <div class="alert alert-danger"><t t-esc="error"/></div>
+                </t>
+                <form action="/my/solar/ticket/new" method="post" class="mt-4">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="mb-3">
+                        <label class="form-label">Select Solar Installation</label>
+                        <select name="installation_id" class="form-select">
+                            <t t-foreach="installations" t-as="inst">
+                                <option t-att-value="inst.id"><t t-esc="inst.name"/> (<t t-esc="inst.capacity_kw"/> kW)</option>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issue Category</label>
+                        <select name="ticket_type" class="form-select">
+                            <option value="breakdown">Inverter Failure / Complete Outage</option>
+                            <option value="generation_low">Low Solar Generation</option>
+                            <option value="cleaning">Panel Cleaning &amp; Washing</option>
+                            <option value="earthing">Earthing / Electrical Tripping</option>
+                            <option value="general">General Maintenance Query</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Serial Number (Optional - from Inverter or Battery label)</label>
+                        <input type="text" name="serial_number" class="form-control" placeholder="e.g. INV-2026-9938"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Problem Description</label>
+                        <textarea name="description" class="form-control" rows="4" required="required" placeholder="Describe symptoms, error codes on inverter display, time outage started..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">Submit Complaint</button>
+                    <a href="/my/solar/tickets" class="btn btn-secondary ms-2">Back to Tickets</a>
+                </form>
+            </div>
+        </t>
+    </template>
+</odoo>
+

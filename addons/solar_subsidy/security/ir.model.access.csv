@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_solar_subsidy_salesperson,solar.subsidy.salesperson,model_solar_subsidy_tracker,solar_core.group_solar_salesperson,1,1,1,0
+access_solar_subsidy_support,solar.subsidy.support,model_solar_subsidy_tracker,solar_core.group_solar_support_agent,1,0,0,0
+access_solar_subsidy_accountant,solar.subsidy.accountant,model_solar_subsidy_tracker,solar_core.group_solar_accountant,1,1,0,0
+access_solar_subsidy_director,solar.subsidy.director,model_solar_subsidy_tracker,solar_core.group_solar_director,1,1,1,1
+

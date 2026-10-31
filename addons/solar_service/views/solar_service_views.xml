@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Service Ticket Tree View -->
+    <record id="view_solar_service_ticket_tree" model="ir.ui.view">
+        <field name="name">solar.service.ticket.tree</field>
+        <field name="model">solar.service.ticket</field>
+        <field name="arch" type="xml">
+            <tree string="Service Tickets" decoration-danger="priority == '3'" decoration-info="state in ('new', 'assigned')" decoration-warning="state in ('diagnosis', 'awaiting_parts', 'in_progress')" decoration-success="state in ('resolved', 'closed')">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="installation_id"/>
+                <field name="ticket_type"/>
+                <field name="priority" widget="priority"/>
+                <field name="assigned_technician_id"/>
+                <field name="repair_classification" widget="badge"/>
+                <field name="is_warranty_claim"/>
+                <field name="total_service_cost" widget="monetary" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state == 'new'" decoration-warning="state in ('assigned', 'in_progress')" decoration-success="state in ('resolved', 'closed')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Service Ticket Form View -->
+    <record id="view_solar_service_ticket_form" model="ir.ui.view">
+        <field name="name">solar.service.ticket.form</field>
+        <field name="model">solar.service.ticket</field>
+        <field name="arch" type="xml">
+            <form string="Solar Service &amp; Breakdown Ticket">
+                <header>
+                    <button name="action_assign" string="Dispatch Technician" type="object" class="oe_highlight" invisible="state != 'new'"/>
+                    <button name="action_diagnose" string="Record Diagnosis" type="object" class="oe_highlight" invisible="state != 'assigned'"/>
+                    <button name="action_awaiting_parts" string="Wait for Spare Parts" type="object" class="btn-warning" invisible="state != 'diagnosis'"/>
+                    <button name="action_start_repair" string="Commence Repair" type="object" class="oe_highlight" invisible="state not in ('diagnosis', 'awaiting_parts')"/>
+                    <button name="action_resolve" string="Mark Testing Resolved" type="object" class="oe_highlight" invisible="state != 'in_progress'"/>
+                    <button name="action_request_customer_confirmation" string="Request Customer Sign-off" type="object" class="btn-info" invisible="state != 'resolved'"/>
+                    <button name="action_close" string="Close &amp; Verify Ticket" type="object" class="btn-success" invisible="state != 'customer_confirmation'"/>
+                    <button name="action_cancel" string="Cancel Ticket" type="object" invisible="state in ('closed', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="new,assigned,diagnosis,in_progress,resolved,customer_confirmation,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Service Ticket Reference"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Customer &amp; Affected System">
+                            <field name="partner_id"/>
+                            <field name="installation_id"/>
+                            <field name="serial_number_entered" placeholder="Scan or enter equipment serial"/>
+                            <field name="warranty_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Categorization &amp; Crew">
+                            <field name="ticket_type"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="assigned_technician_id"/>
+                            <field name="scheduled_visit_date"/>
+                            <field name="repair_classification"/>
+                            <field name="is_warranty_claim"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Customer Complaint" name="complaint">
+                            <group>
+                                <field name="description" placeholder="Customer reported symptoms, inverter error codes, trip details..."/>
+                            </group>
+                            <group string="Repeat Incident Check" invisible="not is_repeat_complaint">
+                                <field name="is_repeat_complaint"/>
+                                <field name="previous_ticket_id"/>
+                            </group>
+                        </page>
+                        <page string="Technical Diagnosis &amp; Actions" name="diagnosis">
+                            <group>
+                                <field name="diagnosis_findings" placeholder="Root cause diagnosis (e.g., loose MC4 connector, grid over-voltage, blown DC fuse)..."/>
+                                <field name="resolution_notes" placeholder="Technical corrective action taken, inverter reset parameters, continuity check..."/>
+                            </group>
+                        </page>
+                        <page string="Spare Parts Replaced" name="parts">
+                            <field name="part_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="description"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price" widget="monetary"/>
+                                    <field name="subtotal" widget="monetary"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Cost Breakdown &amp; Customer Billing" name="financials">
+                            <group>
+                                <group string="Internal Cost Structure">
+                                    <field name="spare_parts_cost" widget="monetary"/>
+                                    <field name="labour_hours"/>
+                                    <field name="labour_cost" widget="monetary"/>
+                                    <field name="transport_cost" widget="monetary"/>
+                                    <field name="total_service_cost" class="oe_subtotal_footer_separator" widget="monetary"/>
+                                </group>
+                                <group string="Customer Invoicing">
+                                    <field name="customer_invoice_amount" widget="monetary" invisible="is_warranty_claim"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Customer Sign-off &amp; Closure" name="customer_signoff">
+                            <group>
+                                <group>
+                                    <field name="customer_confirmation_received"/>
+                                </group>
+                                <group>
+                                    <field name="customer_feedback" placeholder="Customer feedback or signature notes..."/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action & Menu -->
+    <record id="action_solar_service_ticket" model="ir.actions.act_window">
+        <field name="name">Service &amp; Repairs</field>
+        <field name="res_model">solar.service.ticket</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Log a customer support or breakdown service ticket</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_solar_service_ticket_act"
+              name="All Tickets"
+              parent="solar_core.menu_solar_service"
+              action="action_solar_service_ticket"
+              sequence="10"/>
+</odoo>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    SolarFlow 360 — res.partner solar extensions
+    -->
+
+    <!-- Inherit partner form to add Solar tab -->
+    <record id="view_partner_form_solar" model="ir.ui.view">
+        <field name="name">res.partner.form.solar</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Solar" name="solar_page"
+                      groups="solar_core.group_solar_technician">
+                    <group>
+                        <group string="Solar Classification">
+                            <field name="is_solar_customer"/>
+                            <field name="customer_type"
+                                   invisible="not is_solar_customer"/>
+                        </group>
+                        <group string="Property Details"
+                               invisible="not is_solar_customer">
+                            <field name="property_type"/>
+                            <field name="roof_type"/>
+                            <field name="roof_area_sqft"/>
+                        </group>
+                    </group>
+                    <group invisible="not is_solar_customer">
+                        <group string="Electricity Details">
+                            <field name="electricity_provider"/>
+                            <field name="consumer_number"/>
+                            <field name="sanctioned_load_kw"/>
+                            <field name="monthly_electricity_bill"/>
+                        </group>
+                        <group string="Location">
+                            <field name="geo_latitude"/>
+                            <field name="geo_longitude"/>
+                        </group>
+                    </group>
+                    <group invisible="not is_solar_customer"
+                           string="Solar Records">
+                        <field name="solar_installation_count"
+                               string="Installations"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
+
