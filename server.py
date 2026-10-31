@@ -649,9 +649,166 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         @media (max-width: 980px) {
             .grid-2, .grid-3 { grid-template-columns: 1fr; }
         }
+
+        /* -------------------------------------------------------------
+           ENTERPRISE LOGIN PORTAL OVERLAY (4 ROLE EXPERIENCES)
+        ------------------------------------------------------------- */
+        .login-portal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-canvas);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .login-portal-shell {
+            width: 100%;
+            max-width: 1060px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            padding: 36px 40px;
+        }
+
+        .role-portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+            gap: 16px;
+            margin: 28px 0;
+        }
+
+        .role-portal-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 22px 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .role-portal-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px -6px var(--accent-gold-glow);
+        }
+
+        .role-portal-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
     </style>
 </head>
 <body>
+
+    <!-- -------------------------------------------------------------
+         AUTHENTIC ENTERPRISE LOGIN PORTAL (4 ROLE EXPERIENCES)
+    -------------------------------------------------------------- -->
+    <div id="loginPortalScreen" class="login-portal-overlay">
+        <div class="login-portal-shell">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-subtle); padding-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="brand-emblem" style="width: 44px; height: 44px; font-size: 1.4rem;">⚡</div>
+                    <div>
+                        <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">SolarFlow 360</h1>
+                        <div style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">SunPower Solutions — Odoo 17 CE Enterprise Authentication</div>
+                    </div>
+                </div>
+                <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme" style="align-self: center;">
+                    <span id="loginThemeIcon">☀️</span>
+                    <span id="loginThemeLabel">Light Mode</span>
+                </button>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">Select Authorized Role to Enter Dedicated Portal</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Each security group provides a strictly isolated workspace, permission boundaries, and role-specific KPI dashboards.</div>
+            </div>
+
+            <div class="role-portal-grid">
+                <!-- Role 1: Director -->
+                <div class="role-portal-card" onclick="loginAsRole('director')">
+                    <div>
+                        <div class="role-portal-badge" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.3);">📊</div>
+                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Director / Admin</div>
+                        <div style="font-size: 0.72rem; color: var(--accent-gold); font-weight: 600; margin-top: 2px;">director@sunpower.com</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">Executive Overview, Operations Intelligence, Sizing, Financial Ledgers, BI Assistant, and Management Approvals.</div>
+                    </div>
+                    <div>
+                        <span class="badge badge-gold" style="margin-bottom: 12px;">Full Enterprise Scope</span>
+                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('director');">Sign In as Director →</button>
+                    </div>
+                </div>
+
+                <!-- Role 2: Sales Administrator -->
+                <div class="role-portal-card" onclick="loginAsRole('salesperson')">
+                    <div>
+                        <div class="role-portal-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3);">🤝</div>
+                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Sales Administrator</div>
+                        <div style="font-size: 0.72rem; color: var(--accent-blue); font-weight: 600; margin-top: 2px;">sales@sunpower.com</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">Sales Pipeline Dashboard, WhatsApp Inbound Leads, Site Survey Requests, Solar Packages, and Quotation Generation.</div>
+                    </div>
+                    <div>
+                        <span class="badge badge-blue" style="margin-bottom: 12px;">Sales & CRM Pipeline</span>
+                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('salesperson');">Sign In as Sales Admin →</button>
+                    </div>
+                </div>
+
+                <!-- Role 3: Operations Manager -->
+                <div class="role-portal-card" onclick="loginAsRole('operations')">
+                    <div>
+                        <div class="role-portal-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3);">⚙️</div>
+                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Operations Manager</div>
+                        <div style="font-size: 0.72rem; color: var(--accent-green); font-weight: 600; margin-top: 2px;">ops@sunpower.com</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">Operations Funnel, Feasibility Survey Approval, 15-Technician Dispatch & Routing, Inventory Shortages, and Warranty QA.</div>
+                    </div>
+                    <div>
+                        <span class="badge badge-green" style="margin-bottom: 12px;">Workforce & Operations</span>
+                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('operations');">Sign In as Operations →</button>
+                    </div>
+                </div>
+
+                <!-- Role 4: Field Technician -->
+                <div class="role-portal-card" onclick="loginAsRole('technician')">
+                    <div>
+                        <div class="role-portal-badge" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.25);">🛠️</div>
+                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Field Technician</div>
+                        <div style="font-size: 0.72rem; color: var(--accent-gold); font-weight: 600; margin-top: 2px;">tech@sunpower.com (Suresh Patel)</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin: 12px 0;">My Assigned Work Orders Only, Rooftop Survey Data Entry, Serial Scanning, Electrical Testing (DC/AC/Earth), and Customer Sign-off.</div>
+                    </div>
+                    <div>
+                        <span class="badge badge-dim" style="margin-bottom: 12px;">Strict Row-Level Isolation</span>
+                        <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="event.stopPropagation(); loginAsRole('technician');">Sign In as Technician →</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 22px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+                <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 520px;">
+                    <input type="text" id="credentialInput" class="form-control" placeholder="Quick Login (type 'director', 'sales', 'ops', or 'tech')" onkeypress="if(event.key==='Enter') submitCredentialLogin()">
+                    <button class="btn btn-gold" onclick="submitCredentialLogin()">Sign In</button>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    <span>🔒 Powered by Odoo 17 CE Session Authentication &amp; ir.rule Access Models</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- -------------------------------------------------------------
          PERSISTENT SIDEBAR NAVIGATION (12 ENTERPRISE MODULES)
@@ -729,6 +886,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 <div style="font-weight: 600; font-size: 0.8rem; color: var(--text-main);" id="loggedUserName">Director (Executive)</div>
                 <div style="font-size: 0.7rem; color: var(--text-dim);" id="loggedUserRole">SunPower Management</div>
             </div>
+            <button onclick="logoutUser()" title="Sign Out to Login Portal" style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1rem; padding: 4px;">⎋</button>
         </div>
     </aside>
 
@@ -764,6 +922,10 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                     <option value="operations">Operations Manager (Workforce & QA)</option>
                     <option value="technician">Field Technician (My Jobs Only)</option>
                 </select>
+
+                <button class="btn btn-outline" style="font-size: 0.75rem; padding: 5px 12px; border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red);" onclick="logoutUser()" title="Log out and return to Login Screen">
+                    ⎋ Sign Out
+                </button>
 
                 <div class="system-pill">
                     <div class="live-dot"></div>
@@ -833,6 +995,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             localStorage.setItem('solarflow_theme', theme);
             const icon = document.getElementById('themeToggleIcon');
             const lbl = document.getElementById('themeToggleLabel');
+            const logIcon = document.getElementById('loginThemeIcon');
+            const logLbl = document.getElementById('loginThemeLabel');
             if (icon && lbl) {
                 if (theme === 'light') {
                     icon.textContent = '🌙';
@@ -841,6 +1005,51 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                     icon.textContent = '☀️';
                     lbl.textContent = 'Light Mode';
                 }
+            }
+            if (logIcon && logLbl) {
+                if (theme === 'light') {
+                    logIcon.textContent = '🌙';
+                    logLbl.textContent = 'Dark Mode';
+                } else {
+                    logIcon.textContent = '☀️';
+                    logLbl.textContent = 'Light Mode';
+                }
+            }
+        }
+
+        function loginAsRole(roleKey) {
+            localStorage.setItem('solarflow_logged_in', 'true');
+            hideLoginScreen();
+            switchRole(roleKey);
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('solarflow_logged_in');
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            const portal = document.getElementById('loginPortalScreen');
+            if (portal) portal.style.display = 'flex';
+        }
+
+        function hideLoginScreen() {
+            const portal = document.getElementById('loginPortalScreen');
+            if (portal) portal.style.display = 'none';
+        }
+
+        function submitCredentialLogin() {
+            const val = (document.getElementById('credentialInput').value || '').trim().toLowerCase();
+            if (val.includes('dir') || val.includes('admin') || val.includes('executive')) {
+                loginAsRole('director');
+            } else if (val.includes('sale')) {
+                loginAsRole('salesperson');
+            } else if (val.includes('op') || val.includes('dispatch') || val.includes('manager')) {
+                loginAsRole('operations');
+            } else if (val.includes('tech') || val.includes('field') || val.includes('suresh')) {
+                loginAsRole('technician');
+            } else {
+                alert("Please enter a valid role credential ('director', 'sales', 'ops', or 'tech') or click any role portal above.");
             }
         }
 
@@ -2359,7 +2568,23 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         // Initialize on load with saved or default role and theme
         window.onload = function() {
             applyTheme(currentTheme);
-            switchRole(currentRole);
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleParam = urlParams.get('role');
+            const showLogin = urlParams.get('login');
+
+            if (roleParam && ROLE_PERMISSIONS[roleParam]) {
+                localStorage.setItem('solarflow_logged_in', 'true');
+                currentRole = roleParam;
+            }
+
+            const isLoggedIn = localStorage.getItem('solarflow_logged_in') === 'true';
+
+            if (!isLoggedIn || showLogin === '1') {
+                showLoginScreen();
+            } else {
+                hideLoginScreen();
+                switchRole(currentRole);
+            }
         };
     </script>
 </body>
