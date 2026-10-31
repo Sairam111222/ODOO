@@ -4,9 +4,10 @@
 
 | Role | Odoo Security Group | Model Permissions | Record Scope | Financial Access? |
 |---|---|---|---|---|
-| **Technician** | `group_solar_technician` | Read & Write on `solar.installation`, `solar.service.ticket` | **Own Assigned Records Only** (enforced by `ir.rule`) | ❌ NO |
+| **Technician** | `group_solar_technician` | Read & Write on `solar.installation`, `solar.service.ticket` | **Own Assigned Records Only** (enforced by `ir.rule` & backend controller) | ❌ NO |
 | **Surveyor** | `group_solar_surveyor` | Full CRUD on `solar.site.survey` | **Own Surveys Only** (enforced by `ir.rule`) | ❌ NO |
-| **Salesperson** | `group_solar_salesperson` | Full on CRM & Leads, Read-Only on Packages, Create on Surveys & Subsidies | Company-wide sales pipeline | ⚠️ Quotations Only |
+| **Salesperson** | `group_solar_salesperson` | Full on CRM & Leads, Read-Only on Packages, Create on Surveys & Subsidies | Company-wide sales pipeline | ⚠️ Quotations Only (No Margins) |
+| **Operations Manager** | `group_solar_operations_manager` | Full on Installations, Surveys (Approve/Reject), Dispatch, Stock, Service | Company-wide operational records | ⚠️ Operational Costs Only (No Ledgers) |
 | **Survey Manager** | `group_solar_survey_manager` | Full on Surveys (Approve/Reject) | Company-wide surveys | ❌ NO |
 | **Warehouse Manager** | `group_solar_warehouse_manager` | Full on `stock` & Serial Numbers | All inventory & picking | ❌ NO |
 | **Accountant** | `group_solar_accountant` | Full on `account.move`, `account.payment`, Subsidies | Company-wide financials & job margins | ✅ Full Financials |
@@ -19,15 +20,22 @@
 ## 2. Server-Side Security Enforcement Rules
 
 - [x] **No Security-Through-Obscurity**:
-  - Hiding a button via XML `invisible="..."` or `groups="..."` is treated strictly as a UI convenience.
-  - Every critical state transition:
+  - Hiding a button via XML `invisible="..."` or `groups="..."` or client CSS is treated strictly as a UI convenience.
+  - Every critical endpoint and state transition validates permissions server-side:
+    - `/api/financials`: returns HTTP 403 Forbidden for `technician`, `salesperson`, and `operations`.
+    - `/api/survey-action` (approve/reject): returns HTTP 403 Forbidden for `salesperson` and `technician`.
+    - `/api/reserve-stock`: returns HTTP 403 Forbidden for unauthorized roles (`salesperson`, `technician`).
+    - `/api/assign-technician`: returns HTTP 403 Forbidden unless `director` or `operations`.
+    - `/api/installation-action` (commission): returns HTTP 403 Forbidden for `technician` and `salesperson`.
     - `action_submit_for_approval` in `solar.site.survey`: validates mandatory measurements (roof area > 0, usable area <= roof area, cable distance > 0, bill > 0).
     - `action_generate_quotation` in `solar.site.survey`: server-side check strictly blocks unapproved surveys.
     - `action_verify_testing` in `solar.installation`: verifies earthing resistance between 0.1 and 5.0 Ω.
     - `action_commission` in `solar.installation`: enforces customer sign-off and serial numbers on inverters/batteries.
     - `action_close` in `solar.service.ticket`: enforces customer confirmation before closure.
-- [x] **Row-Level Isolation (`ir.rule`)**:
+- [x] **Row-Level & Field-Level Isolation (`ir.rule` & Controller Gating)**:
   - Technicians cannot query or inspect installations assigned to other technicians (`[('technician_id', '=', user.id)]`).
+  - Technicians cannot view company-wide CRM leads or sales orders.
+  - Cost fields (`material_cost`, `labour_cost`, `other_cost`, `total_cost`, `gross_profit`, `gross_margin_pct`) are stripped from responses for `technician` and `salesperson`.
   - Surveyors are constrained to surveys they originated or were explicitly assigned to (`['|', ('surveyor_id', '=', user.id), ('create_uid', '=', user.id)]`).
 - [x] **Customer Portal Data Isolation**:
   - Authenticated portal customers are restricted strictly to `[('partner_id', '=', request.env.user.partner_id.id)]`.

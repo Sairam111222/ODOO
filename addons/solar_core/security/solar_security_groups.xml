@@ -8,6 +8,7 @@
 
     Hierarchy (implied groups = inherits from):
       Technician < Surveyor < Salesperson < Survey Manager < Director < Admin
+      Operations Manager (inherits Survey Manager + Warehouse Manager)
       Support Agent (standalone, no financial access)
       Accountant (standalone, financial access)
       Warehouse Manager (inherits stock.group_stock_manager)
@@ -99,15 +100,31 @@
         </field>
     </record>
 
+    <!-- ======== ROLE: Operations Manager ======== -->
+    <record id="group_solar_operations_manager" model="res.groups">
+        <field name="name">Operations Manager</field>
+        <field name="category_id" ref="module_category_solar"/>
+        <field name="implied_ids" eval="[
+            (4, ref('group_solar_survey_manager')),
+            (4, ref('group_solar_warehouse_manager')),
+            (4, ref('group_solar_support_agent')),
+        ]"/>
+        <field name="comment">
+            Operations manager: oversees field operations, technician dispatch,
+            survey review and approval, inventory management, installation
+            monitoring, warranty and service management. Has operational
+            financial visibility (costs) but not full ledger access.
+            Cannot manage users or modify system configuration.
+        </field>
+    </record>
+
     <!-- ======== ROLE: Director ======== -->
     <record id="group_solar_director" model="res.groups">
         <field name="name">Director</field>
         <field name="category_id" ref="module_category_solar"/>
         <field name="implied_ids" eval="[
-            (4, ref('group_solar_survey_manager')),
+            (4, ref('group_solar_operations_manager')),
             (4, ref('group_solar_accountant')),
-            (4, ref('group_solar_warehouse_manager')),
-            (4, ref('group_solar_support_agent')),
         ]"/>
         <field name="comment">
             Director: full access to all solar operations,
@@ -129,4 +146,3 @@
     </record>
 
 </odoo>
-

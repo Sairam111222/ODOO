@@ -290,7 +290,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         }
 
         .brand-titles { display: flex; flex-direction: column; }
-        .brand-name { font-weight: 800; font-size: 0.98rem; color: #fff; letter-spacing: -0.02em; }
+        .brand-name { font-weight: 800; font-size: 0.98rem; color: var(--text-main); letter-spacing: -0.02em; }
         .brand-sub { font-size: 0.7rem; color: var(--accent-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
         .nav-scroller {
@@ -326,12 +326,12 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         }
 
         .nav-item:hover {
-            color: #fff;
+            color: var(--text-main);
             background: rgba(255, 255, 255, 0.04);
         }
 
         .nav-item.active {
-            color: #fff;
+            color: var(--text-main);
             background: rgba(245, 158, 11, 0.12);
             border: 1px solid rgba(245, 158, 11, 0.25);
             font-weight: 600;
@@ -890,12 +890,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
 
             updateSidebarNavigation();
 
-            // Redirect automatically if current view not allowed for new role
-            if (!roleCfg.allowedTabs.includes(activeTab)) {
-                loadView(roleCfg.defaultTab);
-            } else {
-                loadView(activeTab);
-            }
+            // Automatically redirect users to their assigned role dashboard on switch
+            loadView(roleCfg.defaultTab);
         }
 
         function loadView(viewKey, element) {
@@ -916,15 +912,15 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             });
 
             const titleMap = {
-                overview: 'Executive Overview',
-                operations: 'Operations Intelligence & Pipeline Funnel',
+                overview: 'Executive Operations Overview',
+                operations: currentRole === 'operations' ? 'Operations Manager Dashboard' : 'Operations Intelligence & Pipeline Funnel',
                 dispatch: '15-Technician Dispatch & Routing Optimizer',
                 sizing: 'Photovoltaic Sizing & ROI Financial Studio',
-                roof: 'Digital Site Survey & Roof Feasibility Assessment',
+                roof: currentRole === 'technician' ? 'Field Site Survey & Roof Form' : 'Digital Site Survey & Roof Feasibility Assessment',
                 packages: 'Standard Solar Packages & Dynamic Bill of Materials',
-                crm: 'Customer Acquisition & WhatsApp Lead Capture',
+                crm: currentRole === 'salesperson' ? 'Sales Administrator Dashboard & CRM' : 'Customer Acquisition & WhatsApp Lead Capture',
                 inventory: 'Warehouse Stock & Serial Number Traceability',
-                installations: 'Field Installation Projects & Electrical Safety',
+                installations: currentRole === 'technician' ? 'Personal Technician Dashboard' : 'Field Installation Projects & Electrical Safety',
                 warranty: 'Equipment Warranties & Guarantee Lifecycle',
                 financials: 'Financial Ledgers, Job Costing & Subsidies',
                 assistant: 'Conversational Business Intelligence Assistant'
@@ -1036,16 +1032,16 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); padding: 14px 16px; border-radius: var(--radius-sm);">
-                                    <div style="font-weight: 700; color: #ef4444; font-size: 0.85rem;">🌧️ Weather Delay Exception (INST-2026-0042)</div>
-                                    <div style="font-size: 0.78rem; color: #d4d4d8; margin-top: 4px;">Sharma Residency: Rooftop waterproofing underway following heavy monsoon spell. Reschedule count: 1.</div>
+                                    <div style="font-weight: 700; color: var(--accent-red); font-size: 0.85rem;">🌧️ Weather Delay Exception (INST-2026-0042)</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Sharma Residency: Rooftop waterproofing underway following heavy monsoon spell. Reschedule count: 1.</div>
                                 </div>
                                 <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 14px 16px; border-radius: var(--radius-sm);">
-                                    <div style="font-weight: 700; color: #f59e0b; font-size: 0.85rem;">🛡️ Warranty Expiring Soon (WRN/2025/0812)</div>
-                                    <div style="font-size: 0.78rem; color: #d4d4d8; margin-top: 4px;">Inverter hardware warranty expiring in 20 days. Automated AMC renewal dossier generated for customer.</div>
+                                    <div style="font-weight: 700; color: var(--accent-gold); font-size: 0.85rem;">🛡️ Warranty Expiring Soon (WRN/2025/0812)</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Inverter hardware warranty expiring in 20 days. Automated AMC renewal dossier generated for customer.</div>
                                 </div>
                                 <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); padding: 14px 16px; border-radius: var(--radius-sm);">
-                                    <div style="font-weight: 700; color: #3b82f6; font-size: 0.85rem;">🏛️ PM Surya Ghar Subsidy DBT Credit Approved</div>
-                                    <div style="font-size: 0.78rem; color: #d4d4d8; margin-top: 4px;">National portal verified dossier SUB/2026/0001 for Sharma Textiles. ₹78,000 direct benefit sanctioned.</div>
+                                    <div style="font-weight: 700; color: var(--accent-blue); font-size: 0.85rem;">🏛️ PM Surya Ghar Subsidy DBT Credit Approved</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">National portal verified dossier SUB/2026/0001 for Sharma Textiles. ₹78,000 direct benefit sanctioned.</div>
                                 </div>
                             </div>
                         </div>
@@ -1320,8 +1316,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                                         <span class="badge badge-gold">${p.code}</span>
                                         <span style="font-size: 0.75rem; color: var(--text-dim);">${p.type.toUpperCase()}</span>
                                     </div>
-                                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 4px;">${p.name}</h3>
-                                    <div style="font-size: 1.8rem; font-weight: 900; color: #fff; margin: 12px 0;">₹${p.price.toLocaleString()} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-dim);">all-incl</span></div>
+                                    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">${p.name}</h3>
+                                    <div style="font-size: 1.8rem; font-weight: 900; color: var(--text-main); margin: 12px 0;">₹${p.price.toLocaleString()} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-dim);">all-incl</span></div>
 
                                     <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; font-size: 0.78rem; display: flex; flex-direction: column; gap: 6px;">
                                         <div>✓ <strong>${p.panels} × ${p.panel_watt}Wp</strong> Mono-PERC PV Panels</div>
@@ -1340,18 +1336,45 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 `;
             }
 
-            // 7. CUSTOMER & CRM
+            // 7. CUSTOMER & CRM / SALES DASHBOARD
             else if (viewKey === 'crm') {
+                const isSalesRole = (currentRole === 'salesperson');
                 container.innerHTML = `
                     <div class="page-header">
                         <div>
-                            <h1 class="page-title">Customer Relationship Management (CRM)</h1>
-                            <div class="page-desc">Inbound lead capture via WhatsApp, automated duplicate detection, and survey scheduling.</div>
+                            <h1 class="page-title">${isSalesRole ? 'Sales Administrator Dashboard & Pipeline' : 'Customer Relationship Management (CRM)'}</h1>
+                            <div class="page-desc">${isSalesRole ? 'Direct sales operations, inbound lead qualification, site survey requests, and quotation conversion.' : 'Inbound lead capture via WhatsApp, automated duplicate detection, and survey scheduling.'}</div>
                         </div>
                         <div class="header-actions">
-                            <button class="btn btn-gold" onclick="openModal('new_lead')">+ New Lead</button>
+                            <button class="btn btn-gold" onclick="openModal('new_lead')">+ Inbound Lead</button>
+                            <button class="btn" onclick="openModal('quick_quote', 3)">+ Quick Quote</button>
                         </div>
                     </div>
+
+                    ${isSalesRole ? `
+                    <div class="kpi-row">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Active Inbound Leads</div>
+                            <div class="kpi-value">${(data.leads || []).length}</div>
+                            <div class="kpi-sub sub-up">WhatsApp (58%), Web (26%)</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Qualified Sales Pipeline</div>
+                            <div class="kpi-value">₹4.8M</div>
+                            <div class="kpi-sub sub-up">Target: ₹6.0M / Mo</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Site Surveys Requested</div>
+                            <div class="kpi-value">${(data.leads || []).filter(l => l.survey_id).length} Active</div>
+                            <div class="kpi-sub sub-up">Avg Survey SLA: 48h</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Proposal Conversion Rate</div>
+                            <div class="kpi-value">91.3%</div>
+                            <div class="kpi-sub sub-up">42 Proposals Accepted</div>
+                        </div>
+                    </div>
+                    ` : ''}
 
                     <div class="card">
                         <div class="card-title-bar">
@@ -1470,20 +1493,49 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 `;
             }
 
-            // 9. INSTALLATION MANAGEMENT
+            // 9. INSTALLATION MANAGEMENT / TECHNICIAN DASHBOARD
             else if (viewKey === 'installations') {
+                const isTech = (currentRole === 'technician');
                 container.innerHTML = `
                     <div class="page-header">
                         <div>
-                            <h1 class="page-title">Field Installation Projects & Execution</h1>
-                            <div class="page-desc">Crew dispatch, serial allocation, mandatory electrical safety tests, and customer handover.</div>
+                            <h1 class="page-title">${isTech ? 'Personal Technician Dashboard — My Assigned Jobs' : 'Field Installation Projects & Execution'}</h1>
+                            <div class="page-desc">${isTech ? 'Assigned field installations, serial scanning, electrical safety verification (DC/AC/Earthing), and customer sign-off.' : 'Crew dispatch, serial allocation, mandatory electrical safety tests, and customer handover.'}</div>
+                        </div>
+                        <div class="header-actions">
+                            ${isTech ? `<button class="btn btn-gold" onclick="openModal('scan_serial')">🔍 Scan Equipment Serial</button>` : ''}
                         </div>
                     </div>
 
+                    ${isTech ? `
+                    <div class="kpi-row">
+                        <div class="kpi-card">
+                            <div class="kpi-title">My Assigned Jobs</div>
+                            <div class="kpi-value">${(data.installations || []).length} Active</div>
+                            <div class="kpi-sub sub-up">Lead Tech: Suresh Patel</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Safety Verification</div>
+                            <div class="kpi-value">${(data.installations || []).filter(i => i.testing_passed).length} / ${(data.installations || []).length}</div>
+                            <div class="kpi-sub sub-up">100% Passed Safety Standard</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Earthing Resistance Quality</div>
+                            <div class="kpi-value">${(data.installations && data.installations[0] && data.installations[0].earthing_ohms) ? data.installations[0].earthing_ohms + ' Ω' : '2.1 Ω'}</div>
+                            <div class="kpi-sub sub-up">Safe (&le; 5.0 Ω Compliance)</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Customer Handover Rating</div>
+                            <div class="kpi-value">5.0 ★</div>
+                            <div class="kpi-sub sub-up">Zero Punchlist Exceptions</div>
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <div class="card">
                         <div class="card-title-bar">
-                            <h2 class="card-h2">Installation Operations Board</h2>
-                            <span class="badge badge-green">15-Tech Pool Active</span>
+                            <h2 class="card-h2">${isTech ? 'My Assigned Installations & Work Order Queue' : 'Installation Operations Board'}</h2>
+                            <span class="badge ${isTech ? 'badge-gold' : 'badge-green'}">${isTech ? 'Assigned Field Jobs' : '15-Tech Pool Active'}</span>
                         </div>
                         <table class="data-table">
                             <thead>
@@ -1517,9 +1569,9 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                                         <td>
                                             ${i.state==='testing' ? `
                                                 <button class="btn btn-gold" style="padding: 4px 10px; font-size: 0.72rem;" onclick="openModal('record_testing', ${i.id})">Record Safety Test</button>
-                                            ` : i.state==='completed' ? `
-                                                <button class="btn btn-gold" style="padding: 4px 10px; font-size: 0.72rem;" onclick="commissionInstallation(${i.id})">Commission & Warranties</button>
-                                            ` : `<span style="color: var(--text-dim); font-size: 0.75rem;">Verified</span>`}
+                                            ` : i.state==='completed' ? (
+                                                isTech ? `<span style="color: var(--accent-gold); font-size: 0.75rem;">Awaiting Commissioning Handover</span>` : `<button class="btn btn-gold" style="padding: 4px 10px; font-size: 0.72rem;" onclick="commissionInstallation(${i.id})">Commission & Warranties</button>`
+                                            ) : `<span style="color: var(--text-dim); font-size: 0.75rem;">Verified ✓</span>`}
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -1708,9 +1760,9 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                             </div>
                         </div>
 
-                        <div style="background: #000; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; min-height: 280px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;" id="aiChatStream">
+                        <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; min-height: 280px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;" id="aiChatStream">
                             <div style="max-width: 80%; background: var(--bg-elevated); border: 1px solid var(--border-subtle); padding: 14px 18px; border-radius: 14px; align-self: flex-start;">
-                                <div style="font-weight: 700; color: #fff; margin-bottom: 6px;">✨ SolarFlow Conversational Intelligence Engine</div>
+                                <div style="font-weight: 700; color: var(--text-main); margin-bottom: 6px;">✨ SolarFlow Conversational Intelligence Engine</div>
                                 <div style="color: var(--text-muted); font-size: 0.85rem;">Deterministic BI assistant grounded strictly in authorized Odoo ERP ledgers with zero financial hallucination. Click any query above or type below.</div>
                             </div>
                         </div>
@@ -1814,13 +1866,13 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 if (data.status === 'error_forbidden') {
                     a.innerHTML = `
                         <div style="color: var(--accent-red); font-weight: 700; margin-bottom: 4px;">⛔ Access Restricted (${currentRole.toUpperCase()})</div>
-                        <div style="color: #fff;">${data.direct_answer}</div>
+                        <div style="color: var(--text-main);">${data.direct_answer}</div>
                         <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 6px;">${data.limitations}</div>
                     `;
                 } else {
                     a.innerHTML = `
-                        <div style="font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 8px;">✨ ${data.direct_answer}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-dim); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                        <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; margin-bottom: 8px;">✨ ${data.direct_answer}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
                             <div><strong>Period:</strong> ${data.reporting_period}</div>
                             <div><strong>Methodology:</strong> ${data.methodology}</div>
                             <div><strong>Source Records:</strong> ${data.supporting_records ? data.supporting_records.join(', ') : 'INS/2026/0001'}</div>
@@ -1839,7 +1891,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/survey-action', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id, action: 'approve'})
+                body: JSON.stringify({id, action: 'approve', role: currentRole})
             })
             .then(r => r.json())
             .then(() => loadView('roof'));
@@ -1851,7 +1903,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/survey-action', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id, action: 'reject', reason})
+                body: JSON.stringify({id, action: 'reject', reason, role: currentRole})
             })
             .then(r => r.json())
             .then(() => loadView('roof'));
@@ -1861,7 +1913,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/survey-action', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: surveyId, action: 'generate_quote'})
+                body: JSON.stringify({id: surveyId, action: 'generate_quote', role: currentRole})
             })
             .then(r => r.json())
             .then(data => {
@@ -1874,7 +1926,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/installation-action', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id, action: 'commission'})
+                body: JSON.stringify({id, action: 'commission', role: currentRole})
             })
             .then(r => r.json())
             .then(data => {
@@ -2104,7 +2156,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/create-lead', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name, phone, capacity_kw: cap})
+                body: JSON.stringify({name, phone, capacity_kw: cap, role: currentRole})
             })
             .then(r => r.json())
             .then(data => {
@@ -2128,7 +2180,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/installation-action', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id, action: 'record_testing', dc_v, ac_v, earthing, signatory: sign})
+                body: JSON.stringify({id, action: 'record_testing', dc_v, ac_v, earthing, signatory: sign, role: currentRole})
             })
             .then(r => r.json())
             .then(data => {
@@ -2142,7 +2194,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/lead-action', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: leadId, action: 'schedule_survey'})
+                body: JSON.stringify({id: leadId, action: 'schedule_survey', role: currentRole})
             })
             .then(r => r.json())
             .then(data => {
@@ -2167,7 +2219,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                     roof_type: roofType,
                     total_roof_area_sqft: sqft,
                     reported_obstacles: ['water_tank', 'parapet_wall'],
-                    azimuth_orientation: ori
+                    azimuth_orientation: ori,
+                    role: currentRole
                 })
             })
             .then(r => r.json())
@@ -2193,7 +2246,8 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                     serial: serial,
                     description: desc,
                     priority: pri,
-                    tech_id: tech_id
+                    tech_id: tech_id,
+                    role: currentRole
                 })
             })
             .then(r => r.json())
@@ -2208,12 +2262,12 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         function executeSerialScan() {
             const s = document.getElementById('mScanInput').value.trim();
             const resDiv = document.getElementById('mScanResult');
-            fetch(`/api/search?q=${encodeURIComponent(s)}&role=director`)
+            fetch(`/api/search?q=${encodeURIComponent(s)}&role=${encodeURIComponent(currentRole)}`)
             .then(r => r.json())
             .then(data => {
                 if (data.results && data.results.length > 0) {
                     const match = data.results[0];
-                    resDiv.innerHTML = `<div style="background: rgba(16,185,129,0.1); border: 1px solid var(--accent-green); padding: 10px; border-radius: 8px; color: #fff;"><strong>${match.title}</strong><br>${match.subtitle}</div>`;
+                    resDiv.innerHTML = `<div style="background: rgba(16,185,129,0.1); border: 1px solid var(--accent-green); padding: 10px; border-radius: 8px; color: var(--text-main);"><strong>${match.title}</strong><br>${match.subtitle}</div>`;
                 } else {
                     resDiv.innerHTML = `<div style="color: var(--accent-red);">Serial not found in registry.</div>`;
                 }
@@ -2230,12 +2284,12 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             fetch('/api/package-configure', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({capacity_kw: cap, system_type: sysType})
+                body: JSON.stringify({capacity_kw: cap, system_type: sysType, role: currentRole})
             })
             .then(r => r.json())
             .then(res => {
                 resDiv.innerHTML = `
-                    <div style="background: rgba(245,158,11,0.1); border: 1px solid var(--accent-gold); padding: 10px; border-radius: 8px; color: #fff;">
+                    <div style="background: rgba(245,158,11,0.1); border: 1px solid var(--accent-gold); padding: 10px; border-radius: 8px; color: var(--text-main);">
                         <strong>BOM Generated:</strong> ${res.bom.panels.qty} Panels (550W) + ${res.bom.inverter.rating_kw}kW Inverter<br>
                         <strong>Total Execution Cost:</strong> ₹${res.cost_breakdown.total_cost.toLocaleString()}<br>
                         <strong>Suggested Price:</strong> ₹${res.cost_breakdown.suggested_price.toLocaleString()} (Margin: ${res.cost_breakdown.projected_margin_pct}%)
@@ -2266,12 +2320,12 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                             box.innerHTML = `<div style="padding: 12px 16px; color: var(--text-dim); text-align: center; font-size: 0.8rem;">No matching authorized records found for "${query}"</div>`;
                         } else {
                             box.innerHTML = results.map(r => `
-                                <div style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;"
-                                     onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                                <div style="padding: 10px 16px; border-bottom: 1px solid var(--border-subtle); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;"
+                                     onmouseover="this.style.background='var(--bg-elevated)'"
                                      onmouseout="this.style.background='transparent'"
                                      onclick="selectSearchResult('${r.module}', '${r.id}')">
                                     <div>
-                                        <div style="font-weight: 600; color: #fff; font-size: 0.84rem;">${r.title}</div>
+                                        <div style="font-weight: 600; color: var(--text-main); font-size: 0.84rem;">${r.title}</div>
                                         <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">${r.subtitle}</div>
                                     </div>
                                     <span class="badge badge-gold" style="font-size: 0.65rem;">${r.badge}</span>
@@ -2401,6 +2455,9 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             })
 
         elif parsed.path == '/api/dispatch':
+            if role == 'technician':
+                self.send_json({'error': f"Forbidden: Field technicians do not have access to workforce dispatch administration."}, status=403)
+                return
             self.send_json({'technicians': DATA.technicians})
 
         elif parsed.path == '/api/sizing':
@@ -2417,6 +2474,9 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'packages': DATA.packages})
 
         elif parsed.path == '/api/crm':
+            if role == 'technician':
+                self.send_json({'error': f"Forbidden: Field technicians do not have access to customer acquisition CRM pipeline."}, status=403)
+                return
             leads_enriched = []
             for l in DATA.leads:
                 cust = next((p['name'] for p in DATA.partners if p['id'] == l['partner_id']), 'Customer')
@@ -2425,6 +2485,9 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'leads': leads_enriched})
 
         elif parsed.path == '/api/inventory':
+            if role == 'technician':
+                self.send_json({'error': f"Forbidden: Field technicians do not have access to warehouse inventory management."}, status=403)
+                return
             serials_enriched = []
             for s in DATA.serials:
                 inst_ref = next((i['ref'] for i in DATA.installations if i['id'] == s['installation_id']), None)
@@ -2465,7 +2528,7 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'warranties': w_enriched, 'tickets': t_enriched})
 
         elif parsed.path == '/api/financials':
-            if role in ('technician', 'salesperson'):
+            if role in ('technician', 'salesperson', 'operations'):
                 self.send_json({'error': f"Forbidden: Role '{role}' is not authorized to access company-wide financial ledgers or gross profit margins."}, status=403)
                 return
             inst_enriched = []
@@ -2523,32 +2586,41 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
 
             results = []
 
-            # 1. Customers (res.partner)
+            # 1. Customers (res.partner) - Restricted to assigned job customers for technicians
+            allowed_partner_ids = None
+            if role == 'technician':
+                allowed_partner_ids = {i['partner_id'] for i in DATA.installations if i.get('technician_id') == 2}
+
             for p in DATA.partners:
+                if allowed_partner_ids is not None and p['id'] not in allowed_partner_ids:
+                    continue
                 if query in p['name'].lower() or query in p['phone'].lower() or query in p['city'].lower():
                     results.append({
                         'type': 'Customer',
-                        'module': 'crm',
+                        'module': 'crm' if role != 'technician' else 'installations',
                         'id': p['id'],
                         'title': p['name'],
                         'subtitle': f"Phone: {p['phone']} | City: {p['city']} | Sanctioned: {p['sanctioned_kw']}kW",
                         'badge': 'Customer'
                     })
 
-            # 2. Leads (crm.lead)
-            for l in DATA.leads:
-                if query in l['ref'].lower() or query in l['name'].lower():
-                    results.append({
-                        'type': 'CRM Lead',
-                        'module': 'crm',
-                        'id': l['id'],
-                        'title': f"{l['ref']} - {l['name']}",
-                        'subtitle': f"Channel: {l['channel'].title()} | State: {l['state'].title()} | {l['capacity_kw']}kW",
-                        'badge': 'Lead'
-                    })
+            # 2. Leads (crm.lead) - Hidden from technicians
+            if role != 'technician':
+                for l in DATA.leads:
+                    if query in l['ref'].lower() or query in l['name'].lower():
+                        results.append({
+                            'type': 'CRM Lead',
+                            'module': 'crm',
+                            'id': l['id'],
+                            'title': f"{l['ref']} - {l['name']}",
+                            'subtitle': f"Channel: {l['channel'].title()} | State: {l['state'].title()} | {l['capacity_kw']}kW",
+                            'badge': 'Lead'
+                        })
 
-            # 3. Installations (solar.installation)
+            # 3. Installations (solar.installation) - Row-level restricted for technicians
             for i in DATA.installations:
+                if role == 'technician' and i.get('technician_id') != 2:
+                    continue
                 cust = next((p['name'] for p in DATA.partners if p['id'] == i['partner_id']), 'Customer')
                 if query in i['ref'].lower() or query in i['tech_name'].lower() or query in cust.lower():
                     results.append({
@@ -2565,7 +2637,7 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                 if query in s['serial'].lower() or query in s['model'].lower():
                     results.append({
                         'type': 'Serial Lot',
-                        'module': 'inventory',
+                        'module': 'inventory' if role != 'technician' else 'installations',
                         'id': s['serial'],
                         'title': f"Serial: {s['serial']}",
                         'subtitle': f"Model: {s['model']} | Status: {s['status'].title()}",
@@ -2584,8 +2656,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                         'badge': 'Warranty'
                     })
 
-            # 6. Service Tickets (solar.service.ticket)
+            # 6. Service Tickets (solar.service.ticket) - Row-level restricted for technicians
             for t in DATA.tickets:
+                if role == 'technician' and t.get('tech_id') != 2:
+                    continue
                 cust = next((p['name'] for p in DATA.partners if p['id'] == t['partner_id']), 'Customer')
                 if query in t['ref'].lower() or query in t['desc'].lower() or query in t['serial'].lower() or query in cust.lower():
                     results.append({
@@ -2670,11 +2744,19 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                 self.send_json({'status': 'success', 'order_ref': order_ref, 'amount': 185000.0})
 
         elif parsed.path == '/api/installation-action':
+            role = payload.get('role', 'director')
             inst_id = payload.get('id')
             action = payload.get('action')
             inst = next((i for i in DATA.installations if i['id'] == inst_id), None)
             if not inst:
                 self.send_json({'error': 'Installation not found'}, status=404)
+                return
+
+            if action == 'commission' and role in ('salesperson', 'technician'):
+                self.send_json({'error': f"Permission Denied: Role '{role}' cannot commission installations. Commissioning requires Operations Manager or Director approval."}, status=403)
+                return
+            if action == 'record_testing' and role == 'salesperson':
+                self.send_json({'error': f"Permission Denied: Salesperson cannot record electrical engineering tests."}, status=403)
                 return
 
             if action == 'record_testing':
@@ -2699,6 +2781,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                 self.send_json({'status': 'success', 'warranties_created': len(new_w)})
 
         elif parsed.path == '/api/create-lead':
+            role = payload.get('role', 'director')
+            if role == 'technician':
+                self.send_json({'error': f"Permission Denied: Field technician cannot directly create CRM leads."}, status=403)
+                return
             name = payload.get('name')
             phone = payload.get('phone')
             cap = payload.get('capacity_kw', 3.0)
@@ -2834,6 +2920,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'status': 'success', 'serial': serial_str, 'status_updated': 'dispatched'})
 
         elif parsed.path == '/api/lead-action':
+            role = payload.get('role', 'director')
+            if role == 'technician':
+                self.send_json({'error': f"Permission Denied: Field technician cannot manage CRM leads."}, status=403)
+                return
             lead_id = payload.get('id')
             action = payload.get('action')
             lead = next((l for l in DATA.leads if l['id'] == lead_id), None)
@@ -2915,8 +3005,15 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
             self.send_json({'status': 'success', 'ticket_ref': ticket_ref, 'is_warranty': is_warranty, 'classification': classification})
 
         elif parsed.path == '/api/subsidy-action':
+            role = payload.get('role', 'director')
+            if role == 'technician':
+                self.send_json({'error': f"Permission Denied: Field technician cannot manage government subsidies."}, status=403)
+                return
             sub_id = payload.get('id')
             action = payload.get('action')
+            if action == 'approve' and role in ('salesperson', 'support'):
+                self.send_json({'error': f"Permission Denied: Role '{role}' cannot approve government subsidies."}, status=403)
+                return
             sub = next((s for s in DATA.subsidies if s['id'] == sub_id), None)
             if not sub:
                 self.send_json({'error': 'Subsidy dossier not found'}, status=404)
@@ -2935,6 +3032,10 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                 self.send_json({'error': f"Unknown subsidy action: {action}"}, status=400)
 
         elif parsed.path == '/api/package-configure':
+            role = payload.get('role', 'director')
+            if role == 'technician':
+                self.send_json({'error': f"Permission Denied: Field technician cannot configure BOM package pricing."}, status=403)
+                return
             cap = float(payload.get('capacity_kw', 3.0))
             sys_type = payload.get('system_type', 'ongrid')
             num_panels = math.ceil((cap * 1000.0) / 550.0)

@@ -1,6 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_solar_warranty_support,solar.warranty.support,model_solar_warranty,solar_core.group_solar_support_agent,1,0,0,0
+access_solar_warranty_technician,solar.warranty.technician,model_solar_warranty,solar_core.group_solar_technician,1,0,0,0
 access_solar_warranty_salesperson,solar.warranty.salesperson,model_solar_warranty,solar_core.group_solar_salesperson,1,1,1,0
+access_solar_warranty_operations,solar.warranty.operations,model_solar_warranty,solar_core.group_solar_operations_manager,1,1,1,0
 access_solar_warranty_director,solar.warranty.director,model_solar_warranty,solar_core.group_solar_director,1,1,1,1
 access_solar_warranty_policy_support,solar.warranty.policy.support,model_solar_warranty_policy,solar_core.group_solar_support_agent,1,0,0,0
+access_solar_warranty_policy_operations,solar.warranty.policy.operations,model_solar_warranty_policy,solar_core.group_solar_operations_manager,1,1,0,0
 access_solar_warranty_policy_director,solar.warranty.policy.director,model_solar_warranty_policy,solar_core.group_solar_director,1,1,1,1

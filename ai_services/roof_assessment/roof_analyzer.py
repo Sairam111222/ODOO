@@ -7,6 +7,9 @@ Identifies potential obstacles, shading risks, and usable array surface ratio.
 """
 
 
+import math
+
+
 class RoofAssessmentAssistant:
     """Preliminary AI Roof Feasibility & Obstacle Analysis Assistant."""
 
@@ -83,5 +86,4 @@ class RoofAssessmentAssistant:
         }
 
 
-import math
 

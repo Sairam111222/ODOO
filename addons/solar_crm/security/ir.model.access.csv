@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_crm_lead_solar_technician,crm.lead.solar.technician,crm.model_crm_lead,solar_core.group_solar_technician,1,0,0,0
 access_crm_lead_solar_salesperson,crm.lead.solar.salesperson,crm.model_crm_lead,solar_core.group_solar_salesperson,1,1,1,0
+access_crm_lead_solar_operations,crm.lead.solar.operations,crm.model_crm_lead,solar_core.group_solar_operations_manager,1,1,0,0
 access_crm_lead_solar_director,crm.lead.solar.director,crm.model_crm_lead,solar_core.group_solar_director,1,1,1,1
-

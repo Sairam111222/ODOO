@@ -12,6 +12,30 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+    <!-- Salesperson: see installations linked to own sales orders -->
+    <record id="rule_salesperson_installations" model="ir.rule">
+        <field name="name">Salesperson: Related Installations Only</field>
+        <field name="model_id" ref="model_solar_installation"/>
+        <field name="domain_force">['|', ('order_id.user_id', '=', user.id), ('order_id.user_id', '=', False)]</field>
+        <field name="groups" eval="[(4, ref('solar_core.group_solar_salesperson'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Operations Manager: full read/write on all installations -->
+    <record id="rule_operations_full_installations" model="ir.rule">
+        <field name="name">Operations Manager: Full Installation Access</field>
+        <field name="model_id" ref="model_solar_installation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('solar_core.group_solar_operations_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
     <!-- Director / Admin: full access to installations -->
     <record id="rule_director_full_access" model="ir.rule">
         <field name="name">Director: Full Solar Installation Access</field>
@@ -24,4 +48,3 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 </odoo>
-

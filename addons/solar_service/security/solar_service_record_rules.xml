@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Technician: only see own assigned service tickets -->
+    <record id="rule_technician_own_tickets" model="ir.rule">
+        <field name="name">Technician: Own Service Tickets Only</field>
+        <field name="model_id" ref="model_solar_service_ticket"/>
+        <field name="domain_force">[('technician_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('solar_core.group_solar_technician'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
     <!-- Support Agents: see all service tickets but cannot delete -->
     <record id="rule_support_service_tickets" model="ir.rule">
         <field name="name">Support Agent: All Service Tickets (no delete)</field>
         <field name="model_id" ref="model_solar_service_ticket"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[(4, ref('solar_core.group_solar_support_agent'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Operations Manager: full service ticket access -->
+    <record id="rule_operations_service_tickets" model="ir.rule">
+        <field name="name">Operations Manager: Full Service Ticket Access</field>
+        <field name="model_id" ref="model_solar_service_ticket"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('solar_core.group_solar_operations_manager'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
@@ -24,4 +48,3 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 </odoo>
-
