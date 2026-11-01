@@ -78,3 +78,4 @@ class TestRoleLoginAuthentication:
         status, data = make_login_request("intruder@unknown.com", "Password@123")
         assert status == 401
         assert "error" in data
+
