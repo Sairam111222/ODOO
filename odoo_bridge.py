@@ -160,3 +160,4 @@ class OdooBridge:
 
 # Global singleton instance
 ODOO_GATEWAY = OdooBridge()
+

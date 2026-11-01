@@ -104,3 +104,4 @@ flowchart TD
 - **Initial State:** `new`
 - **Allowed Transitions:** `new` -> `in_progress` -> `closed`
 - **Guard:** System verifies serial number against active warranties. Under-warranty tickets are classified as `free_warranty` (Rs. 0 customer bill); out-of-warranty tickets are classified as `chargeable`.
+

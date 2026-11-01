@@ -178,3 +178,4 @@ Captures customer acceptance, signature acknowledgement, and rating.
 Maker-checker governance framework for financial and operational exceptions.
 - **Request:** Raised by Sales or Operations (`status: pending`)
 - **Decision:** Authorized strictly by Director (`status: approved` or `rejected`)
+

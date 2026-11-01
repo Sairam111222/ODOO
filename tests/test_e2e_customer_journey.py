@@ -186,3 +186,4 @@ class TestCompleteSolarCustomerJourney:
         status, audit_resp = api_get("/api/audit-log?role=director")
         assert status == 200
         assert len(audit_resp.get("audit_log", [])) > 0
+

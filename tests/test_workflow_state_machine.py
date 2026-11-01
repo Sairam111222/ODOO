@@ -100,3 +100,4 @@ class TestWorkflowStateMachine:
             "decision": "approved"
         })
         assert status == 403
+

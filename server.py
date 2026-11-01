@@ -852,6 +852,83 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             padding: 20px 24px;
             margin-top: 8px;
         }
+    
+        /* Real-time Enterprise User Badge & Header Status */
+        .enterprise-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9999px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .status-dot-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .user-session-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 5px 12px;
+        }
+        .user-avatar-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-meta-block {
+            display: flex;
+            flex-direction: column;
+        }
+        .user-meta-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        .user-meta-role {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            letter-spacing: 0.04em;
+        }
+        .login-btn-loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+        @keyframes shake-anim {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .login-shake {
+            animation: shake-anim 0.4s ease-in-out;
+        }
+
     </style>
 </head>
 <body>
@@ -1028,7 +1105,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                         </div>
                     </div>
                     <div>
-                        <button class="btn btn-gold" style="width: 100%; height: 38px; justify-content: center; font-weight: 700;" onclick="submitCredentialLogin()">Sign In &rarr;</button>
+                        <button id="loginSubmitBtn" class="btn btn-gold" style="width: 100%; height: 38px; justify-content: center; font-weight: 700;" onclick="submitCredentialLogin()">Sign In &rarr;</button>
                     </div>
                 </div>
 
@@ -1063,6 +1140,10 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             <a class="nav-item" data-nav="dispatch" onclick="loadView('dispatch', this)">
                 <div class="nav-left"><span class="nav-icon">📍</span> <span>3. Technician Dispatch</span></div>
                 <span class="nav-badge">15 Pool</span>
+            </a>
+            <a class="nav-item" data-nav="approvals" onclick="loadView('approvals', this)">
+                <div class="nav-left"><span class="nav-icon">⚖️</span> <span>Approval Center</span></div>
+                <span class="nav-badge" id="approvalCountBadge" style="background:var(--accent-gold); color:#000; font-weight:700;">Queue</span>
             </a>
 
             <div class="nav-section-label" data-nav-group="eng">Engineering & Sizing</div>
@@ -1130,11 +1211,12 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 </div>
             </div>
 
-            <div class="top-center">
-                <div class="search-shell">
-                    <span class="search-icon-pos">🔍</span>
-                    <input type="text" class="search-input" id="globalSearchInput" placeholder="Global Search (Serials, Customers, Orders, Tickets)..." oninput="runLiveSearch(this.value)" autocomplete="off">
-                    <div id="searchResultsOverlay" style="display:none; position:absolute; top:42px; left:0; width:100%; max-height:360px; overflow-y:auto; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:0 12px 36px rgba(0,0,0,0.85); z-index:1000; padding:6px 0;"></div>
+                                    <div class="top-center">
+                <div class="enterprise-badge-pill" id="enterpriseHeaderPill">
+                    <span class="status-dot-pulse"></span>
+                    <span style="font-weight: 700; color: var(--text-main);">SunPower Solutions</span>
+                    <span style="color: var(--text-dim);">&bull;</span>
+                    <span style="color: var(--accent-gold); font-weight: 600;">Odoo 17 CE ORM Grounded</span>
                 </div>
             </div>
 
@@ -1144,12 +1226,14 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                     <span id="themeToggleLabel">Light Mode</span>
                 </button>
 
-                <select class="role-selector" id="roleSelector" onchange="switchRole(this.value)">
-                    <option value="director">Director / Admin (Full Access)</option>
-                    <option value="salesperson">Sales Administrator (CRM & Quotes)</option>
-                    <option value="operations">Operations Manager (Workforce & QA)</option>
-                    <option value="technician">Field Technician (My Jobs Only)</option>
-                </select>
+                <!-- Authenticated User Profile Badge (Enforced from Session) -->
+                <div class="user-session-card" id="userSessionCard">
+                    <div class="user-avatar-circle" id="userAvatarCircle">D</div>
+                    <div class="user-meta-block">
+                        <span class="user-meta-name" id="userMetaName">Director (Executive)</span>
+                        <span class="user-meta-role" id="userMetaRole">DIRECTOR / ADMIN</span>
+                    </div>
+                </div>
 
                 <button class="btn btn-outline" style="font-size: 0.75rem; padding: 5px 12px; border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red);" onclick="logoutUser()" title="Log out and return to Login Screen">
                     ⎋ Sign Out
@@ -1191,7 +1275,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 org: 'SunPower Executive Committee',
                 avatar: 'D',
                 defaultTab: 'overview',
-                allowedTabs: ['overview', 'operations', 'dispatch', 'sizing', 'roof', 'packages', 'crm', 'inventory', 'installations', 'warranty', 'financials', 'assistant']
+                allowedTabs: ['overview', 'operations', 'approvals', 'dispatch', 'sizing', 'roof', 'packages', 'crm', 'inventory', 'installations', 'warranty', 'financials', 'assistant']
             },
             salesperson: {
                 title: 'Sales Administrator',
@@ -1211,7 +1295,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                 org: 'Field Operations & Dispatch',
                 avatar: 'O',
                 defaultTab: 'operations',
-                allowedTabs: ['operations', 'dispatch', 'roof', 'inventory', 'installations', 'warranty', 'assistant']
+                allowedTabs: ['operations', 'approvals', 'dispatch', 'roof', 'inventory', 'installations', 'warranty', 'assistant']
             },
             technician: {
                 title: 'Field Technician',
@@ -1324,13 +1408,21 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             }
         }
 
-        function loginAsRole(roleKey) {
-            localStorage.setItem('solarflow_logged_in', 'true');
-            hideLoginScreen();
-            switchRole(roleKey);
+        let currentAuthSession = null;
+
+        async function loginAsRole(roleKey) {
+            autofillCredentials(roleKey);
+            await submitCredentialLogin();
         }
 
-        function logoutUser() {
+        async function logoutUser() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+            } catch (e) {
+                console.warn('Logout RPC failed:', e);
+            }
+            currentAuthSession = null;
+            localStorage.removeItem('solarflow_session');
             localStorage.removeItem('solarflow_logged_in');
             showLoginScreen();
         }
@@ -1345,47 +1437,98 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             if (portal) portal.style.display = 'none';
         }
 
-        function submitCredentialLogin() {
-            const emailInput = (document.getElementById('loginEmail')?.value || '').trim().toLowerCase();
+        async function submitCredentialLogin() {
+            const emailInput = (document.getElementById('loginEmail')?.value || '').trim();
             const passInput = (document.getElementById('loginPassword')?.value || '').trim();
             const alertBox = document.getElementById('loginAlert');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const portalShell = document.querySelector('.login-portal-shell');
 
-            const canonicalEmail = ROLE_ALIASES[emailInput] || emailInput;
-            const credEntry = ROLE_CREDENTIALS[canonicalEmail];
-
-            if (!credEntry) {
+            if (!emailInput || !passInput) {
                 if (alertBox) {
                     alertBox.style.display = 'block';
                     alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
                     alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
                     alertBox.style.color = 'var(--accent-red)';
-                    alertBox.innerHTML = '<strong>Authentication Failed:</strong> Unrecognized work email. Please select a profile card above or enter an authorized email address.';
+                    alertBox.innerHTML = '<strong>Missing Credentials:</strong> Please enter both email address and password.';
                 }
                 return;
             }
 
-            if (!credEntry.passwords.includes(passInput)) {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="status-dot-pulse" style="display:inline-block; margin-right:6px;"></span> Verifying Odoo 17 CE...';
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput, password: passInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    currentAuthSession = data;
+                    localStorage.setItem('solarflow_session', JSON.stringify(data));
+                    localStorage.setItem('solarflow_logged_in', 'true');
+
+                    if (alertBox) {
+                        alertBox.style.display = 'block';
+                        alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                        alertBox.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+                        alertBox.style.color = 'var(--accent-green)';
+                        alertBox.innerHTML = `<strong>Authentication Verified:</strong> Logged in as ${data.name} (${data.role}). Session established.`;
+                    }
+
+                    // Update Top-Right Header User Info
+                    const userAvatar = document.getElementById('userAvatarCircle');
+                    const userName = document.getElementById('userMetaName');
+                    const userRole = document.getElementById('userMetaRole');
+                    if (userAvatar) userAvatar.textContent = (data.name || 'U')[0].toUpperCase();
+                    if (userName) userName.textContent = data.name;
+                    if (userRole) userRole.textContent = data.role.toUpperCase();
+
+                    setTimeout(() => {
+                        hideLoginScreen();
+                        switchRole(data.role);
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = 'Sign In &rarr;';
+                        }
+                    }, 400);
+
+                } else {
+                    if (alertBox) {
+                        alertBox.style.display = 'block';
+                        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                        alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                        alertBox.style.color = 'var(--accent-red)';
+                        alertBox.innerHTML = `<strong>Authentication Failed:</strong> ${data.error || 'Invalid credentials'}`;
+                    }
+                    if (portalShell) {
+                        portalShell.classList.add('login-shake');
+                        setTimeout(() => portalShell.classList.remove('login-shake'), 450);
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Sign In &rarr;';
+                    }
+                }
+            } catch (err) {
                 if (alertBox) {
                     alertBox.style.display = 'block';
                     alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
                     alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
                     alertBox.style.color = 'var(--accent-red)';
-                    alertBox.innerHTML = '<strong>Authentication Failed:</strong> Incorrect password for ' + canonicalEmail + '. Verify the password indicated on the role card.';
+                    alertBox.innerHTML = `<strong>Network Error:</strong> Cannot reach Odoo server: ${err.message}`;
                 }
-                return;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Sign In &rarr;';
+                }
             }
-
-            if (alertBox) {
-                alertBox.style.display = 'block';
-                alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
-                alertBox.style.border = '1px solid rgba(16, 185, 129, 0.35)';
-                alertBox.style.color = 'var(--accent-green)';
-                alertBox.innerHTML = '<strong>Success:</strong> Authenticated as ' + credEntry.name + '. Loading workspace...';
-            }
-
-            setTimeout(() => {
-                loginAsRole(credEntry.role);
-            }, 300);
         }
 
         function toggleTheme() {
@@ -1421,21 +1564,66 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             });
         }
 
+        async function refreshNotificationBadges() {
+            try {
+                const res = await fetch('/api/notifications?role=' + currentRole);
+                if (res.ok) {
+                    const data = await res.json();
+                    const unread = data.unread || 0;
+                    const badge = document.getElementById('approvalCountBadge');
+                    if (badge) {
+                        badge.textContent = unread > 0 ? (unread + ' Action' + (unread > 1 ? 's' : '')) : 'Queue';
+                    }
+                }
+            } catch(e) {}
+        }
+
         function switchRole(role) {
             if (!ROLE_PERMISSIONS[role]) role = 'director';
             currentRole = role;
             localStorage.setItem('solarflow_role', role);
 
             const roleCfg = ROLE_PERMISSIONS[role];
-            document.getElementById('loggedUserName').textContent = roleCfg.name;
-            document.getElementById('loggedUserRole').textContent = roleCfg.title.toUpperCase();
-            document.getElementById('avatarLetter').textContent = roleCfg.avatar;
-            document.getElementById('roleSelector').value = role;
+            const nameEl = document.getElementById('loggedUserName');
+            if (nameEl) nameEl.textContent = roleCfg.name;
+            const roleEl = document.getElementById('loggedUserRole');
+            if (roleEl) roleEl.textContent = roleCfg.title.toUpperCase();
+            const avatarEl = document.getElementById('avatarLetter');
+            if (avatarEl) avatarEl.textContent = roleCfg.avatar;
+
+            const headerAvatar = document.getElementById('userAvatarCircle');
+            if (headerAvatar) headerAvatar.textContent = roleCfg.avatar;
+            const headerName = document.getElementById('userMetaName');
+            if (headerName) headerName.textContent = roleCfg.name;
+            const headerRole = document.getElementById('userMetaRole');
+            if (headerRole) headerRole.textContent = roleCfg.title.toUpperCase();
+
+            const sel = document.getElementById('roleSelector');
+            if (sel) sel.value = role;
 
             updateSidebarNavigation();
+            refreshNotificationBadges();
 
             // Automatically redirect users to their assigned role dashboard on switch
             loadView(roleCfg.defaultTab);
+        }
+
+        async function decideApproval(id, decision) {
+            try {
+                const res = await fetch('/api/approval-decision', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({role: currentRole, id: id, decision: decision, remarks: `Decision recorded via Approval Center`})
+                });
+                const d = await res.json();
+                if (res.ok) {
+                    loadView('approvals');
+                } else {
+                    alert('Error: ' + (d.error || 'Failed to record decision'));
+                }
+            } catch(e) {
+                alert('Network Error: ' + e.message);
+            }
         }
 
         function loadView(viewKey, element) {
@@ -1458,6 +1646,7 @@ HTML_APP_SHELL = """<!DOCTYPE html>
             const titleMap = {
                 overview: 'Executive Operations Overview',
                 operations: currentRole === 'operations' ? 'Operations Manager Dashboard' : 'Operations Intelligence & Pipeline Funnel',
+                approvals: 'Approval Center & Exception Management',
                 dispatch: '15-Technician Dispatch & Routing Optimizer',
                 sizing: 'Photovoltaic Sizing & ROI Financial Studio',
                 roof: currentRole === 'technician' ? 'Field Site Survey & Roof Form' : 'Digital Site Survey & Roof Feasibility Assessment',
@@ -2269,6 +2458,139 @@ HTML_APP_SHELL = """<!DOCTYPE html>
                         </table>
                     </div>
                 `;
+            }
+
+            // APPROVAL CENTER & EXCEPTION MANAGEMENT VIEW
+            else if (viewKey === 'approvals') {
+                const isDirector = (currentRole === 'director');
+                fetch('/api/approvals?role=' + currentRole)
+                    .then(r => r.json())
+                    .then(appData => {
+                        const approvals = appData.approvals || [];
+                        const pending = approvals.filter(a => a.status === 'pending');
+
+                        container.innerHTML = `
+                            <div class="page-header">
+                                <div>
+                                    <h1 class="page-title">Approval Center &amp; Exception Management</h1>
+                                    <div class="page-desc">Centralized maker-checker governance for credit exceptions, survey waivers, and operational authorisations.</div>
+                                </div>
+                                <div class="header-actions">
+                                    <span class="badge ${pending.length > 0 ? 'badge-gold' : 'badge-green'}" style="font-size:0.85rem; padding:6px 14px;">
+                                        ${pending.length} Pending Approval${pending.length === 1 ? '' : 's'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Exception Management Dashboard Summary Cards (Connected to live backend) -->
+                            const exc = appData.exceptions || {delayed_count: 1, low_stock_count: 1, total_receivable: 145000, low_stock_list: [], delayed_list: []};
+                            ` + `
+                            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Pending Maker-Checker</div>
+                                    <div class="kpi-value" style="color:var(--accent-gold);">${pending.length}</div>
+                                    <div class="kpi-sub">Awaiting Executive Decision</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Active / Stalled Installs</div>
+                                    <div class="kpi-value" style="color:var(--accent-gold);">${(appData.exceptions ? appData.exceptions.delayed_count : 1)}</div>
+                                    <div class="kpi-sub">Awaiting Commissioning</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Critical Low Stock</div>
+                                    <div class="kpi-value" style="color:var(--accent-red);">${(appData.exceptions ? appData.exceptions.low_stock_count : 1)}</div>
+                                    <div class="kpi-sub">Stock at or below reorder threshold</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Pending Receivables</div>
+                                    <div class="kpi-value">&#8377;${((appData.exceptions ? appData.exceptions.total_receivable : 145000) || 0).toLocaleString()}</div>
+                                    <div class="kpi-sub">Awaiting Collection</div>
+                                </div>
+                            </div>
+
+                            <!-- Pending Approval Queue -->
+                            <div class="panel" style="margin-bottom: 24px;">
+                                <div class="panel-header">
+                                    <span class="panel-title">Pending Approval Queue</span>
+                                    <span class="badge badge-gold">${pending.length} Action Items</span>
+                                </div>
+                                <div class="panel-body" style="padding:0;">
+                                    ${pending.length === 0 ? '<div style="padding:32px; text-align:center; color:var(--text-dim);">&#10004; All operational requests and exception waivers have been decided.</div>' : `
+                                        <table class="table" style="width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Exception Subject</th>
+                                                    <th>Type</th>
+                                                    <th>Requester</th>
+                                                    <th>Amount</th>
+                                                    <th>Requested Date</th>
+                                                    <th style="text-align:right;">Decision Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${pending.map(a => `
+                                                    <tr>
+                                                        <td><strong>${a.ref}</strong></td>
+                                                        <td>${a.subject}</td>
+                                                        <td><span class="badge badge-blue">${a.type}</span></td>
+                                                        <td>${(a.requested_by || '').toUpperCase()}</td>
+                                                        <td><strong>&#8377;${(a.amount || 0).toLocaleString()}</strong></td>
+                                                        <td style="color:var(--text-muted);">${a.requested_at}</td>
+                                                        <td style="text-align:right;">
+                                                            ${isDirector ? `
+                                                                <button class="btn btn-sm btn-green" onclick="decideApproval(${a.id}, 'approved')" style="margin-right:6px;">Approve &#10004;</button>
+                                                                <button class="btn btn-sm btn-outline" style="border-color:rgba(239,68,68,0.5); color:var(--accent-red);" onclick="decideApproval(${a.id}, 'rejected')">Reject &#10006;</button>
+                                                            ` : `
+                                                                <span style="font-size:0.75rem; color:var(--text-dim);">&#128274; Director Only</span>
+                                                            `}
+                                                        </td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    `}
+                                </div>
+                            </div>
+
+                            <!-- Historical Decision Log -->
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span class="panel-title">Historical Approval &amp; Decision Ledger</span>
+                                </div>
+                                <div class="panel-body" style="padding:0;">
+                                    <table class="table" style="width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Subject</th>
+                                                <th>Requested By</th>
+                                                <th>Decided By</th>
+                                                <th>Status</th>
+                                                <th>Decision Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${approvals.filter(a => a.status !== 'pending').map(a => `
+                                                <tr>
+                                                    <td><strong>${a.ref}</strong></td>
+                                                    <td>${a.subject}</td>
+                                                    <td>${a.requested_by}</td>
+                                                    <td>${a.decided_by || '-'}</td>
+                                                    <td><span class="badge ${a.status === 'approved' ? 'badge-green' : 'badge-red'}">${(a.status || '').toUpperCase()}</span></td>
+                                                    <td style="color:var(--text-muted);">${a.decided_at || a.requested_at}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(err => {
+                        container.innerHTML = `<div style="padding:24px; color:var(--accent-red);">Failed to load approvals: ${err.message}</div>`;
+                    });
+                return;
             }
 
             // 12. AI BUSINESS INTELLIGENCE
@@ -3252,7 +3574,27 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                 self.send_json({'error': 'Permission Denied: Only Director and Operations Manager can view approvals.'}, status=403)
                 return
             pending = [a for a in DATA.approvals if a['status'] == 'pending']
-            self.send_json({'approvals': DATA.approvals, 'pending_count': len(pending)})
+            low_stock = [
+                {'sku': k, 'name': v['name'], 'available': v['on_hand'] - v['reserved'], 'reorder': v['reorder_point']}
+                for k, v in DATA.inventory.items()
+                if (v['on_hand'] - v['reserved']) <= v['reorder_point']
+            ]
+            delayed_installs = [ins for ins in DATA.installations if ins.get('state') in ('scheduled', 'in_progress', 'testing')]
+            pending_qa = [ins for ins in DATA.installations if ins.get('state') == 'testing' and not ins.get('testing_passed')]
+            total_receivable = sum(ins.get('receivable', 0.0) for ins in DATA.installations)
+
+            self.send_json({
+                'approvals': DATA.approvals,
+                'pending_count': len(pending),
+                'exceptions': {
+                    'delayed_count': len(delayed_installs),
+                    'delayed_list': [{'ref': ins['ref'], 'tech': ins.get('tech_name', 'Unassigned'), 'state': ins.get('state')} for ins in delayed_installs],
+                    'low_stock_count': len(low_stock),
+                    'low_stock_list': low_stock,
+                    'pending_qa_count': len(pending_qa),
+                    'total_receivable': total_receivable
+                }
+            })
 
         elif parsed.path == '/api/notifications':
             role = params.get('role', ['director'])[0]

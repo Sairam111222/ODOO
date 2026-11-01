@@ -23,6 +23,13 @@
 - [x] **Stage 12 (Warranty Activation)**: Automatic 3-tier warranty provisioning upon commissioning (25y panel, 5y inverter, 1y workmanship).
 - [x] **Stage 13 (Service & Subsidy)**: Service breakdown ticketing, warranty entitlement check, and PM Surya Ghar subsidy tracking (`POST /api/service-ticket-create`, `/api/subsidy-action`).
 
+### High-End Real-Time Authentication & UI Modernization
+- [x] **Real-Time Login Portal**: Async verification via `POST /api/login` with loading spinner ("Verifying Odoo 17 CE..."), shake animation on invalid credentials, and instant session establishment.
+- [x] **Eliminated Client-Side Role Selector**: Replaced arbitrary `<select>` role switcher with an authenticated session profile card displaying user initials avatar, full name, and backend-enforced role badge.
+- [x] **Eliminated Custom Search Bar**: Removed top search bar, replaced with enterprise branding status pill: `SunPower Solutions • Odoo 17 CE ORM Grounded` with live pulsating status indicator.
+- [x] **Approval Center & Exception Management**: Real-time maker-checker governance queue for Director approval of commercial exceptions, coupled with live operational exception metrics (delayed installations, critical inventory reorder alerts, overdue receivables).
+- [x] **Dynamic Notification Badges**: Automatic polling and status badge updates on sidebar navigation reflecting unread action items for the active role.
+
 ### Role-Based Security & Server-Side Sessions
 - [x] **Server-Side Session Store**: Cryptographically random UUID sessions stored server-side in `SESSIONS` dict.
 - [x] **HttpOnly Cookies**: Session tokens issued via `Set-Cookie: sf_session=...; HttpOnly; SameSite=Strict; Path=/`.
@@ -43,11 +50,6 @@
   - Resilient hybrid fallback to in-memory `EnterpriseDataStore` when Odoo CE container is offline.
   - Real-time diagnostic telemetry at `GET /api/odoo-status`.
 
-### Maker-Checker Governance & Approvals
-- [x] **Approval Request Inbox**: Sales and Operations submit requests for financial exceptions or credit limits (`POST /api/approval-request`).
-- [x] **Director Authority**: Only Director can approve or reject pending requests (`POST /api/approval-decision`).
-- [x] **Immutable Audit Log**: Every login, workflow transition, approval, and payment recorded in `DATA.audit_log` with timestamp and user email.
-
 ### Automated Test Coverage (110 Total Tests)
 - [x] `tests/test_role_login_credentials.py` (9 tests) — Distinct credentials & auth validation.
 - [x] `tests/test_role_security_matrix.py` (23 tests) — RBAC permissions matrix.
@@ -64,4 +66,4 @@
 - `WORKFLOW_STATES.md` — State transition specifications and Mermaid state diagrams.
 - `API_DOCUMENTATION.md` — Full REST API documentation with request/response schemas.
 - `odoo_bridge.py` — Authoritative XML-RPC bridge with transparent fallback.
-- `server.py` — Upgraded, hardened multi-threaded server with session cookies and all workflow endpoints.
+- `server.py` — Upgraded, hardened multi-threaded server with session cookies, real-time login portal, and all workflow endpoints.

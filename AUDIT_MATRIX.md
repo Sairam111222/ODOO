@@ -55,3 +55,4 @@ All 85 pytest test cases and 25 live endpoint integration tests pass with a 100%
    - Field operations model extended via `project.task` in `solar_installation` (no Enterprise `industry_fsm` or `planning`).
    - Accounting is restricted to standard CE invoicing (`account.move`, `account.payment`).
 3. **Resilient Gateway:** `odoo_bridge.py` includes socket timeout guards and automatic fallback to transactional in-memory datastores with status reporting at `/api/odoo-status`.
+
