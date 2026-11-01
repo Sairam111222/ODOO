@@ -1130,61 +1130,61 @@ HTML_APP_SHELL = """<!DOCTYPE html>
         <nav class="nav-scroller" id="sidebarNav">
             <div class="nav-section-label" data-nav-group="ops">Operations Control</div>
             <a class="nav-item active" data-nav="overview" onclick="loadView('overview', this)">
-                <div class="nav-left"><span class="nav-icon">📊</span> <span>1. Executive Overview</span></div>
+                <div class="nav-left"><span class="nav-icon">📊</span> <span>&bull; Executive Overview</span></div>
                 <span class="nav-badge">Live</span>
             </a>
             <a class="nav-item" data-nav="operations" onclick="loadView('operations', this)">
-                <div class="nav-left"><span class="nav-icon">📈</span> <span>2. Operations Intelligence</span></div>
+                <div class="nav-left"><span class="nav-icon">📈</span> <span>&bull; Operations Intelligence</span></div>
                 <span class="nav-badge">Funnel</span>
             </a>
             <a class="nav-item" data-nav="dispatch" onclick="loadView('dispatch', this)">
-                <div class="nav-left"><span class="nav-icon">📍</span> <span>3. Technician Dispatch</span></div>
+                <div class="nav-left"><span class="nav-icon">📍</span> <span>&bull; Technician Dispatch</span></div>
                 <span class="nav-badge">15 Pool</span>
             </a>
             <a class="nav-item" data-nav="approvals" onclick="loadView('approvals', this)">
-                <div class="nav-left"><span class="nav-icon">⚖️</span> <span>Approval Center</span></div>
+                <div class="nav-left"><span class="nav-icon">⚖️</span> <span>&bull; Approval Center</span></div>
                 <span class="nav-badge" id="approvalCountBadge" style="background:var(--accent-gold); color:#000; font-weight:700;">Queue</span>
             </a>
 
             <div class="nav-section-label" data-nav-group="eng">Engineering & Sizing</div>
             <a class="nav-item" data-nav="sizing" onclick="loadView('sizing', this)">
-                <div class="nav-left"><span class="nav-icon">☀️</span> <span>4. Sizing Studio</span></div>
+                <div class="nav-left"><span class="nav-icon">☀️</span> <span>&bull; Sizing Studio</span></div>
                 <span class="nav-badge">IEC 78%</span>
             </a>
             <a class="nav-item" data-nav="roof" onclick="loadView('roof', this)">
-                <div class="nav-left"><span class="nav-icon">📐</span> <span>5. Roof Assessment</span></div>
+                <div class="nav-left"><span class="nav-icon">📐</span> <span>&bull; Roof Assessment</span></div>
                 <span class="nav-badge">Feasibility</span>
             </a>
             <a class="nav-item" data-nav="packages" onclick="loadView('packages', this)">
-                <div class="nav-left"><span class="nav-icon">📦</span> <span>6. Solar Packages</span></div>
+                <div class="nav-left"><span class="nav-icon">📦</span> <span>&bull; Solar Packages</span></div>
                 <span class="nav-badge">BOM</span>
             </a>
 
             <div class="nav-section-label" data-nav-group="exec">Execution & Lifecycle</div>
             <a class="nav-item" data-nav="crm" onclick="loadView('crm', this)">
-                <div class="nav-left"><span class="nav-icon">🤝</span> <span>7. Customer & CRM</span></div>
+                <div class="nav-left"><span class="nav-icon">🤝</span> <span>&bull; Customer & CRM</span></div>
                 <span class="nav-badge">WhatsApp</span>
             </a>
             <a class="nav-item" data-nav="inventory" onclick="loadView('inventory', this)">
-                <div class="nav-left"><span class="nav-icon">🏭</span> <span>8. Inventory & Traceability</span></div>
+                <div class="nav-left"><span class="nav-icon">🏭</span> <span>&bull; Inventory & Traceability</span></div>
                 <span class="nav-badge">Serials</span>
             </a>
             <a class="nav-item" data-nav="installations" onclick="loadView('installations', this)">
-                <div class="nav-left"><span class="nav-icon">🛠️</span> <span>9. Installation Ops</span></div>
+                <div class="nav-left"><span class="nav-icon">🛠️</span> <span>&bull; Installation Ops</span></div>
                 <span class="nav-badge">Safety</span>
             </a>
             <a class="nav-item" data-nav="warranty" onclick="loadView('warranty', this)">
-                <div class="nav-left"><span class="nav-icon">🛡️</span> <span>10. Warranty & Service</span></div>
+                <div class="nav-left"><span class="nav-icon">🛡️</span> <span>&bull; Warranty & Service</span></div>
                 <span class="nav-badge">25-Yr</span>
             </a>
 
             <div class="nav-section-label" data-nav-group="fin">Finance & Intelligence</div>
             <a class="nav-item" data-nav="financials" onclick="loadView('financials', this)">
-                <div class="nav-left"><span class="nav-icon">💰</span> <span>11. Financial Intelligence</span></div>
+                <div class="nav-left"><span class="nav-icon">💰</span> <span>&bull; Financial Intelligence</span></div>
                 <span class="nav-badge">Ledgers</span>
             </a>
             <a class="nav-item" data-nav="assistant" onclick="loadView('assistant', this)">
-                <div class="nav-left"><span class="nav-icon">🤖</span> <span>12. AI BI Assistant</span></div>
+                <div class="nav-left"><span class="nav-icon">🤖</span> <span>&bull; AI BI Assistant</span></div>
                 <span class="nav-badge">RBAC</span>
             </a>
         </nav>
@@ -1794,22 +1794,22 @@ HTML_APP_SHELL = """<!DOCTYPE html>
 
                     <div class="kpi-row">
                         <div class="kpi-card">
-                            <div class="kpi-title">1. Total Inquiries</div>
+                            <div class="kpi-title">&bull; Total Inquiries</div>
                             <div class="kpi-value">128</div>
                             <div class="kpi-sub">WhatsApp (58%), Web (26%)</div>
                         </div>
                         <div class="kpi-card">
-                            <div class="kpi-title">2. Feasibility Surveys</div>
+                            <div class="kpi-title">&bull; Feasibility Surveys</div>
                             <div class="kpi-value">46</div>
                             <div class="kpi-sub sub-up">Avg Cycle: 2.1 Days</div>
                         </div>
                         <div class="kpi-card">
-                            <div class="kpi-title">3. Proposals Accepted</div>
+                            <div class="kpi-title">&bull; Proposals Accepted</div>
                             <div class="kpi-value">42</div>
                             <div class="kpi-sub sub-up">91.3% Conversion Rate</div>
                         </div>
                         <div class="kpi-card">
-                            <div class="kpi-title">4. Commissioned (Mo)</div>
+                            <div class="kpi-title">&bull; Commissioned (Mo)</div>
                             <div class="kpi-value">42</div>
                             <div class="kpi-sub sub-up">100% Zero-Defect</div>
                         </div>
