@@ -30,8 +30,37 @@ from ai_services.technician_optimizer.optimizer import TechnicianOptimizer
 from ai_services.inventory_forecasting.demand_forecaster import InventoryDemandForecaster
 from ai_services.solar_intelligence.solar_calculator import SolarGenerationIntelligence
 from ai_services.roof_assessment.roof_analyzer import RoofAssessmentAssistant
+from odoo_bridge import ODOO_GATEWAY
 
 PORT = 8069
+
+# =============================================================================
+# SERVER-SIDE SESSION STORE
+# =============================================================================
+SESSIONS = {}   # {session_uuid: {'role': ..., 'name': ..., 'email': ...}}
+
+CRED_MAP = {
+    'director@sunpower.com': {'passwords': ('Director@360', 'admin123', 'director'), 'role': 'director', 'name': 'Director (Executive)'},
+    'sales@sunpower.com':    {'passwords': ('Sales@360',    'sales123', 'sales'),    'role': 'salesperson', 'name': 'Sales Administrator'},
+    'ops@sunpower.com':      {'passwords': ('Ops@360',      'ops123',   'ops'),      'role': 'operations',  'name': 'Operations Manager'},
+    'tech@sunpower.com':     {'passwords': ('Tech@360',     'tech123',  'tech'),     'role': 'technician',  'name': 'Field Technician'},
+}
+CRED_ALIASES = {
+    'director': 'director@sunpower.com', 'admin': 'director@sunpower.com',
+    'sales': 'sales@sunpower.com',       'salesperson': 'sales@sunpower.com',
+    'ops': 'ops@sunpower.com',           'operations': 'ops@sunpower.com',
+    'tech': 'tech@sunpower.com',         'technician': 'tech@sunpower.com',
+}
+
+def get_session(handler):
+    """Return session dict from Cookie header or None."""
+    cookie_hdr = handler.headers.get('Cookie', '')
+    for part in cookie_hdr.split(';'):
+        part = part.strip()
+        if part.startswith('sf_session='):
+            sid = part[len('sf_session='):]
+            return SESSIONS.get(sid)
+    return None
 
 # =============================================================================
 # ENTERPRISE IN-MEMORY ERP DATA REPOSITORY (Odoo 17 CE ORM Alignment)
@@ -175,6 +204,49 @@ class EnterpriseDataStore:
         self.subsidies = [
             {'id': 1, 'ref': 'SUB/2026/0001', 'partner_id': 1, 'installation_id': 1, 'scheme': 'PM Surya Ghar: Muft Bijli Yojana', 'app_no': 'MNRE-KA-2026-98122', 'est_amount': 78000.0, 'approved_amount': 78000.0, 'state': 'approved', 'docs_collected': True, 'missing_docs': 'All Required Documents Collected'},
             {'id': 2, 'ref': 'SUB/2026/0002', 'partner_id': 4, 'installation_id': 3, 'scheme': 'PM Surya Ghar: Muft Bijli Yojana', 'app_no': 'MNRE-KA-2026-98440', 'est_amount': 78000.0, 'approved_amount': 0.0, 'state': 'documents_collected', 'docs_collected': False, 'missing_docs': 'DCR Certificate, Commissioning Report'},
+        ]
+
+        # 12. Quotations (pre-sales-order)
+        self.quotations = []
+
+        # 13. Approval requests (maker-checker)
+        self.approvals = [
+            {'id': 1, 'ref': 'APR/2026/0001', 'type': 'financial_exception',
+             'subject': 'Credit Approval — Kaveri Engineering partial advance',
+             'requested_by': 'salesperson', 'requested_at': '2026-10-27',
+             'status': 'pending', 'amount': 145000.0,
+             'installation_id': 2, 'decision': None, 'decided_by': None, 'remarks': ''},
+        ]
+
+        # 14. In-app notifications
+        self.notifications = [
+            {'id': 1, 'role': 'director', 'type': 'approval_pending',
+             'message': 'Financial exception requires your approval (APR/2026/0001)',
+             'related': 'APR/2026/0001', 'read': False, 'created_at': '2026-10-27T10:00:00'},
+            {'id': 2, 'role': 'operations', 'type': 'survey_submitted',
+             'message': 'New survey SRV/2026/0003 submitted — pending your review',
+             'related': 'SRV/2026/0003', 'read': False, 'created_at': '2026-10-25T14:30:00'},
+            {'id': 3, 'role': 'salesperson', 'type': 'payment_received',
+             'message': 'Advance payment received for SO-2026-0002 — project now active',
+             'related': 'SO-2026-0002', 'read': True, 'created_at': '2026-10-26T09:15:00'},
+            {'id': 4, 'role': 'technician', 'type': 'work_order',
+             'message': 'New installation assigned: INS/2026/0003 on 2026-11-04',
+             'related': 'INS/2026/0003', 'read': False, 'created_at': '2026-10-28T08:00:00'},
+        ]
+
+        # 15. Purchase Orders
+        self.purchase_orders = [
+            {'id': 1, 'ref': 'PO/2026/0001', 'vendor': 'Growatt India Pvt Ltd',
+             'item': '550W Mono-PERC PV Panels', 'qty': 100, 'unit_cost': 11500.0,
+             'amount_total': 1150000.0, 'state': 'done', 'receipt_date': '2026-10-20'},
+        ]
+
+        # 16. Audit log
+        self.audit_log = [
+            {'id': 1, 'ts': '2026-10-25T09:12:00', 'user': 'director@sunpower.com',
+             'role': 'director', 'action': 'COMMISSION', 'resource': 'INS/2026/0001', 'result': 'ok'},
+            {'id': 2, 'ts': '2026-10-26T11:45:00', 'user': 'ops@sunpower.com',
+             'role': 'operations', 'action': 'APPROVE_SURVEY', 'resource': 'SRV/2026/0001', 'result': 'ok'},
         ]
 
 DATA = EnterpriseDataStore()
@@ -3174,9 +3246,40 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
 
             self.send_json({'results': results[:10]})
 
+        elif parsed.path == '/api/approvals':
+            role = params.get('role', ['director'])[0]
+            if role not in ('director', 'operations'):
+                self.send_json({'error': 'Permission Denied: Only Director and Operations Manager can view approvals.'}, status=403)
+                return
+            pending = [a for a in DATA.approvals if a['status'] == 'pending']
+            self.send_json({'approvals': DATA.approvals, 'pending_count': len(pending)})
+
+        elif parsed.path == '/api/notifications':
+            role = params.get('role', ['director'])[0]
+            user_notifs = [n for n in DATA.notifications if n['role'] == role]
+            unread = sum(1 for n in user_notifs if not n['read'])
+            self.send_json({'notifications': user_notifs, 'unread': unread})
+
+        elif parsed.path == '/api/audit-log':
+            role = params.get('role', ['director'])[0]
+            if role != 'director':
+                self.send_json({'error': 'Permission Denied: Only Director can access the audit log.'}, status=403)
+                return
+            self.send_json({'audit_log': list(reversed(DATA.audit_log[-100:]))})
+
+        elif parsed.path == '/api/odoo-status':
+            status_data = ODOO_GATEWAY.check_connection()
+            self.send_json(status_data)
+
+        elif parsed.path == '/api/purchase-orders':
+            role = params.get('role', ['director'])[0]
+            if role not in ('director', 'operations'):
+                self.send_json({'error': 'Permission Denied'}, status=403)
+                return
+            self.send_json({'purchase_orders': DATA.purchase_orders})
+
         else:
-            self.send_response(404)
-            self.end_headers()
+            self.send_json({'error': 'Endpoint Not Found'}, status=404)
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -3187,32 +3290,29 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
         if parsed.path in ('/api/login', '/api/auth'):
             email = (payload.get('email') or payload.get('username') or '').strip().lower()
             pwd = (payload.get('password') or '').strip()
-            CRED_MAP = {
-                'director@sunpower.com': {'passwords': ('Director@360', 'admin123', 'director'), 'role': 'director', 'name': 'Director (Executive)'},
-                'sales@sunpower.com': {'passwords': ('Sales@360', 'sales123', 'sales'), 'role': 'salesperson', 'name': 'Sales Administrator'},
-                'ops@sunpower.com': {'passwords': ('Ops@360', 'ops123', 'ops'), 'role': 'operations', 'name': 'Operations Manager'},
-                'tech@sunpower.com': {'passwords': ('Tech@360', 'tech123', 'tech'), 'role': 'technician', 'name': 'Field Technician'}
-            }
-            ALIASES = {
-                'director': 'director@sunpower.com',
-                'admin': 'director@sunpower.com',
-                'sales': 'sales@sunpower.com',
-                'salesperson': 'sales@sunpower.com',
-                'ops': 'ops@sunpower.com',
-                'operations': 'ops@sunpower.com',
-                'tech': 'tech@sunpower.com',
-                'technician': 'tech@sunpower.com'
-            }
-            canonical = ALIASES.get(email, email)
+            canonical = CRED_ALIASES.get(email, email)
             cred = CRED_MAP.get(canonical)
             if cred and (pwd in cred['passwords'] or not pwd):
-                self.send_json({
-                    'status': 'success',
-                    'role': cred['role'],
-                    'name': cred['name'],
-                    'email': canonical,
-                    'token': f"sf360_session_{cred['role']}_authenticated"
+                import uuid as _uuid
+                sid = f"sf360_session_{cred['role']}_{_uuid.uuid4()}"
+                SESSIONS[sid] = {'role': cred['role'], 'name': cred['name'], 'email': canonical}
+                DATA.audit_log.append({
+                    'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                    'user': canonical, 'role': cred['role'],
+                    'action': 'LOGIN', 'resource': '/api/login', 'result': 'ok'
                 })
+                resp_data = {'status': 'success', 'role': cred['role'],
+                             'name': cred['name'], 'email': canonical, 'token': sid}
+                body_bytes = json.dumps(resp_data, indent=2).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Set-Cookie', f'sf_session={sid}; HttpOnly; SameSite=Strict; Path=/')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Length', str(len(body_bytes)))
+                self.send_header('Connection', 'close')
+                self.send_header('X-Content-Type-Options', 'nosniff')
+                self.end_headers()
+                self.wfile.write(body_bytes)
             else:
                 self.send_json({'error': 'Invalid email or password. Please verify the credentials.'}, status=401)
             return
@@ -3597,9 +3697,456 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
                     'projected_margin_pct': 35.0
                 }
             })
-        else:
-            self.send_response(404)
+        elif parsed.path == '/api/logout':
+            sid = None
+            cookie_hdr = self.headers.get('Cookie', '')
+            for part in cookie_hdr.split(';'):
+                part = part.strip()
+                if part.startswith('sf_session='):
+                    sid = part[len('sf_session='):]
+            if sid and sid in SESSIONS:
+                del SESSIONS[sid]
+            body = __import__('json').dumps({'status': 'logged_out'}).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Set-Cookie', 'sf_session=; Max-Age=0; Path=/')
+            self.send_header('Content-Length', str(len(body)))
             self.end_headers()
+            self.wfile.write(body)
+
+        elif parsed.path == '/api/quotation-create':
+            role = payload.get('role', 'director')
+            if role == 'technician':
+                self.send_json({'error': 'Permission Denied: Technicians cannot create quotations.'}, status=403)
+                return
+            survey_id = payload.get('survey_id')
+            package_id = int(payload.get('package_id', 3))
+            survey = next((s for s in DATA.surveys if s['id'] == survey_id), None)
+            if not survey:
+                self.send_json({'error': 'Survey not found'}, status=404)
+                return
+            if survey['state'] != 'approved':
+                self.send_json({'error': "Cannot generate quotation: survey must be 'approved'."}, status=400)
+                return
+            pkg = next((p for p in DATA.packages if p['id'] == package_id), DATA.packages[2])
+            qty = int(payload.get('qty', 1))
+            custom_price = float(payload.get('custom_price', pkg['price']))
+            discount = float(payload.get('discount_pct', 0.0))
+            final_price = round(custom_price * qty * (1 - discount / 100.0), 2)
+            quot_ref = f"QT-2026-{len(DATA.quotations)+1:04d}"
+            new_quot = {
+                'id': len(DATA.quotations)+1, 'ref': quot_ref,
+                'partner_id': survey['partner_id'], 'survey_id': survey_id,
+                'package_id': pkg['id'], 'package_name': pkg['name'],
+                'capacity_kw': pkg['capacity_kw'],
+                'list_price': pkg['price'], 'custom_price': custom_price,
+                'discount_pct': discount, 'amount_total': final_price,
+                'state': 'draft',
+                'created_by': role, 'created_at': date.today().isoformat(),
+                'valid_until': (date.today() + timedelta(days=30)).isoformat(),
+                'terms': '30-day validity. 40% advance on acceptance.',
+                'line_items': [
+                    {'name': pkg['name'], 'qty': qty, 'unit_price': custom_price, 'subtotal': final_price},
+                    {'name': 'Installation Labour', 'qty': 1, 'unit_price': pkg['labor'], 'subtotal': pkg['labor']},
+                    {'name': 'Transport & Logistics', 'qty': 1, 'unit_price': pkg['transport'], 'subtotal': pkg['transport']},
+                    {'name': 'DISCOM/Net-Meter Fees', 'qty': 1, 'unit_price': pkg['discom'], 'subtotal': pkg['discom']},
+                ]
+            }
+            DATA.quotations.append(new_quot)
+            DATA.notifications.append({
+                'id': len(DATA.notifications)+1, 'role': 'salesperson',
+                'type': 'quotation_ready', 'read': False,
+                'message': f'Quotation {quot_ref} created and ready to send to customer',
+                'related': quot_ref, 'created_at': datetime.utcnow().isoformat()
+            })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'CREATE_QUOTATION', 'resource': quot_ref, 'result': 'ok'})
+            self.send_json({'status': 'success', 'ref': quot_ref, 'amount_total': final_price,
+                            'valid_until': new_quot['valid_until']})
+
+        elif parsed.path == '/api/quotation-action':
+            role = payload.get('role', 'director')
+            quot_id = int(payload.get('id', 0))
+            action = payload.get('action')
+            quot = next((q for q in DATA.quotations if q['id'] == quot_id), None)
+            if not quot:
+                self.send_json({'error': 'Quotation not found'}, status=404)
+                return
+            if action == 'send':
+                if role == 'technician':
+                    self.send_json({'error': 'Permission Denied'}, status=403)
+                    return
+                quot['state'] = 'sent'
+                self.send_json({'status': 'success', 'state': 'sent'})
+            elif action == 'accept':
+                quot['state'] = 'accepted'
+                order_ref = f"SO-2026-{len(DATA.orders)+1:04d}"
+                new_order = {
+                    'id': len(DATA.orders)+1, 'ref': order_ref,
+                    'partner_id': quot['partner_id'], 'survey_id': quot['survey_id'],
+                    'package_id': quot['package_id'], 'quotation_id': quot['id'],
+                    'amount_total': quot['amount_total'], 'state': 'sale',
+                    'payment_state': 'not_paid', 'paid_amount': 0.0, 'installation_id': None
+                }
+                DATA.orders.append(new_order)
+                DATA.notifications.append({
+                    'id': len(DATA.notifications)+1, 'role': 'salesperson',
+                    'type': 'order_confirmed', 'read': False,
+                    'message': f'Sales Order {order_ref} confirmed - advance payment due',
+                    'related': order_ref, 'created_at': datetime.utcnow().isoformat()
+                })
+                DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                    'user': role, 'role': role, 'action': 'ACCEPT_QUOTATION', 'resource': quot['ref'], 'result': 'ok'})
+                self.send_json({'status': 'success', 'state': 'accepted', 'order_ref': order_ref})
+            elif action == 'reject':
+                quot['state'] = 'rejected'
+                quot['reject_reason'] = payload.get('reason', '')
+                self.send_json({'status': 'success', 'state': 'rejected'})
+            else:
+                self.send_json({'error': f'Unknown quotation action: {action}'}, status=400)
+
+        elif parsed.path == '/api/payment-record':
+            role = payload.get('role', 'director')
+            if role not in ('director', 'salesperson', 'operations'):
+                self.send_json({'error': 'Permission Denied: Only Sales Admin, Operations, or Director can record payments.'}, status=403)
+                return
+            order_id = int(payload.get('order_id', 0))
+            amount = float(payload.get('amount', 0))
+            payment_ref = payload.get('payment_ref', f'PAY-{date.today().isoformat()}')
+            payment_mode = payload.get('mode', 'bank_transfer')
+            order = next((o for o in DATA.orders if o['id'] == order_id), None)
+            if not order:
+                self.send_json({'error': 'Sales order not found'}, status=404)
+                return
+            if amount <= 0:
+                self.send_json({'error': 'Payment amount must be greater than zero'}, status=400)
+                return
+            order['paid_amount'] = round(order.get('paid_amount', 0.0) + amount, 2)
+            remaining = round(order['amount_total'] - order['paid_amount'], 2)
+            if remaining <= 0:
+                order['payment_state'] = 'paid'
+            elif order['paid_amount'] > 0:
+                order['payment_state'] = 'in_payment'
+            if order.get('installation_id'):
+                inst = next((i for i in DATA.installations if i['id'] == order['installation_id']), None)
+                if inst:
+                    inst['cash_received'] = round(inst.get('cash_received', 0.0) + amount, 2)
+                    inst['receivable'] = round(inst['contract_rev'] - inst['cash_received'], 2)
+            DATA.notifications.append({
+                'id': len(DATA.notifications)+1, 'role': 'director',
+                'type': 'payment_received', 'read': False,
+                'message': f'Payment of Rs.{amount:,.0f} received for {order["ref"]} via {payment_mode}',
+                'related': order['ref'], 'created_at': datetime.utcnow().isoformat()
+            })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'RECORD_PAYMENT',
+                'resource': order['ref'], 'result': f'amount={amount}'})
+            self.send_json({'status': 'success', 'paid_amount': order['paid_amount'],
+                            'payment_state': order['payment_state'], 'remaining': remaining})
+
+        elif parsed.path == '/api/survey-submit':
+            role = payload.get('role', 'operations')
+            if role not in ('director', 'operations', 'salesperson'):
+                self.send_json({'error': 'Permission Denied: Field technicians cannot submit surveys.'}, status=403)
+                return
+            lead_id = payload.get('lead_id')
+            partner_id = int(payload.get('partner_id', 0))
+            if not partner_id:
+                self.send_json({'error': 'partner_id is required'}, status=400)
+                return
+            survey_ref = f"SRV/2026/{len(DATA.surveys)+1:04d}"
+            new_survey = {
+                'id': len(DATA.surveys)+1, 'ref': survey_ref,
+                'partner_id': partner_id, 'lead_id': lead_id,
+                'surveyor': payload.get('surveyor', 'Operations Team'),
+                'survey_date': payload.get('survey_date', date.today().isoformat()),
+                'property_type': payload.get('property_type', 'independent_house'),
+                'roof_type': payload.get('roof_type', 'flat_rcc'),
+                'roof_sqft': float(payload.get('roof_sqft', 400.0)),
+                'usable_sqft': float(payload.get('usable_sqft', 300.0)),
+                'tilt': float(payload.get('tilt', 15.0)),
+                'orientation': payload.get('orientation', 'south'),
+                'shading': payload.get('shading', 'no_shading'),
+                'cable_m': float(payload.get('cable_m', 20.0)),
+                'sanctioned_kw': float(payload.get('sanctioned_kw', 5.0)),
+                'bill': float(payload.get('bill', 3000.0)),
+                'rec_capacity_kw': float(payload.get('rec_capacity_kw', 3.0)),
+                'state': 'submitted', 'rejection_reason': None, 'sale_order_id': None
+            }
+            DATA.surveys.append(new_survey)
+            if lead_id:
+                lead = next((l for l in DATA.leads if l['id'] == lead_id), None)
+                if lead:
+                    lead['survey_id'] = new_survey['id']
+                    lead['state'] = 'survey_done'
+            DATA.notifications.append({
+                'id': len(DATA.notifications)+1, 'role': 'operations',
+                'type': 'survey_submitted', 'read': False,
+                'message': f'New survey {survey_ref} submitted - awaiting engineering review',
+                'related': survey_ref, 'created_at': datetime.utcnow().isoformat()
+            })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'SUBMIT_SURVEY', 'resource': survey_ref, 'result': 'ok'})
+            self.send_json({'status': 'success', 'ref': survey_ref, 'id': new_survey['id']})
+
+        elif parsed.path == '/api/qa-submit':
+            role = payload.get('role', 'operations')
+            if role not in ('director', 'operations', 'technician'):
+                self.send_json({'error': 'Permission Denied: Only Operations, Technician, or Director can submit QA.'}, status=403)
+                return
+            inst_id = int(payload.get('installation_id', 0))
+            inst = next((i for i in DATA.installations if i['id'] == inst_id), None)
+            if not inst:
+                self.send_json({'error': 'Installation not found'}, status=404)
+                return
+            if inst['state'] not in ('in_progress', 'scheduled', 'testing'):
+                self.send_json({'error': f"Cannot submit QA for installation in state '{inst['state']}'."}, status=400)
+                return
+            checklist = payload.get('checklist', {})
+            all_passed = all([
+                checklist.get('panel_alignment', False),
+                checklist.get('inverter_connections', False),
+                checklist.get('earthing', False),
+                checklist.get('dc_ac_test', False),
+                checklist.get('cable_tray', False),
+            ])
+            inst['dc_v'] = float(payload.get('dc_v', inst.get('dc_v', 0.0)))
+            inst['ac_v'] = float(payload.get('ac_v', inst.get('ac_v', 0.0)))
+            inst['earthing_ohms'] = float(payload.get('earthing_ohms', inst.get('earthing_ohms', 0.0)))
+            inst['testing_passed'] = all_passed
+            inst['state'] = 'testing' if all_passed else 'in_progress'
+            qa_result = 'PASSED' if all_passed else 'FAILED'
+            if not all_passed:
+                DATA.notifications.append({
+                    'id': len(DATA.notifications)+1, 'role': 'operations',
+                    'type': 'qa_failed', 'read': False,
+                    'message': f'QA FAILED for {inst["ref"]} - remediation required before commissioning',
+                    'related': inst['ref'], 'created_at': datetime.utcnow().isoformat()
+                })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'QA_SUBMIT',
+                'resource': inst['ref'], 'result': qa_result})
+            self.send_json({'status': 'success', 'qa_result': qa_result,
+                            'state': inst['state'], 'testing_passed': all_passed})
+
+        elif parsed.path == '/api/commissioning':
+            role = payload.get('role', 'director')
+            if role not in ('director', 'operations'):
+                self.send_json({'error': 'Permission Denied: Only Director or Operations Manager can approve commissioning.'}, status=403)
+                return
+            inst_id = int(payload.get('installation_id', 0))
+            inst = next((i for i in DATA.installations if i['id'] == inst_id), None)
+            if not inst:
+                self.send_json({'error': 'Installation not found'}, status=404)
+                return
+            if not inst.get('testing_passed'):
+                self.send_json({'error': 'Cannot commission: QA tests have not passed.'}, status=400)
+                return
+            if inst['state'] not in ('testing', 'completed', 'in_progress'):
+                self.send_json({'error': f"Cannot commission: state is '{inst['state']}'."}, status=400)
+                return
+            net_meter_no = payload.get('net_meter_no', '')
+            commission_date = payload.get('commission_date', date.today().isoformat())
+            inst['state'] = 'commissioned'
+            inst['commissioned_date'] = commission_date
+            inst['net_meter'] = bool(net_meter_no)
+            inst['net_meter_no'] = net_meter_no or 'PENDING-DISCOM'
+            panel_serial = payload.get('panel_serial', f'PANEL-{commission_date[:7]}')
+            inv_serial = payload.get('inverter_serial', f'INV-AUTO-{inst_id:04d}')
+            try:
+                cd = datetime.strptime(commission_date, '%Y-%m-%d')
+            except Exception:
+                cd = datetime.utcnow()
+            w_panel_end = (cd + timedelta(days=365*25)).strftime('%Y-%m-%d')
+            w_inv_end = (cd + timedelta(days=365*5)).strftime('%Y-%m-%d')
+            w_comp_end = (cd + timedelta(days=365*1)).strftime('%Y-%m-%d')
+            base_id = len(DATA.warranties)
+            new_warranties = [
+                {'id': base_id+1, 'ref': f'WRN/2026/{base_id+1:04d}', 'partner_id': inst['partner_id'],
+                 'installation_id': inst_id, 'type': 'panel', 'duration_yrs': 25,
+                 'start_date': commission_date, 'end_date': w_panel_end,
+                 'serial': panel_serial, 'state': 'active', 'terms': '25-Year 80% Output Performance Guarantee'},
+                {'id': base_id+2, 'ref': f'WRN/2026/{base_id+2:04d}', 'partner_id': inst['partner_id'],
+                 'installation_id': inst_id, 'type': 'inverter', 'duration_yrs': 5,
+                 'start_date': commission_date, 'end_date': w_inv_end,
+                 'serial': inv_serial, 'state': 'active', 'terms': '5-Year Manufacturer Replacement Guarantee'},
+                {'id': base_id+3, 'ref': f'WRN/2026/{base_id+3:04d}', 'partner_id': inst['partner_id'],
+                 'installation_id': inst_id, 'type': 'comprehensive', 'duration_yrs': 1,
+                 'start_date': commission_date, 'end_date': w_comp_end,
+                 'serial': inst['ref'], 'state': 'active', 'terms': '1-Year Comprehensive Workmanship Guarantee'},
+            ]
+            DATA.warranties.extend(new_warranties)
+            DATA.notifications.append({
+                'id': len(DATA.notifications)+1, 'role': 'salesperson',
+                'type': 'commissioned', 'read': False,
+                'message': f'Installation {inst["ref"]} commissioned. Warranties activated.',
+                'related': inst['ref'], 'created_at': datetime.utcnow().isoformat()
+            })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'COMMISSION', 'resource': inst['ref'], 'result': 'ok'})
+            self.send_json({'status': 'success', 'commissioned_date': commission_date,
+                            'net_meter_no': inst['net_meter_no'],
+                            'warranties_activated': len(new_warranties),
+                            'warranty_refs': [w['ref'] for w in new_warranties]})
+
+        elif parsed.path == '/api/customer-signoff':
+            role = payload.get('role', 'operations')
+            if role not in ('director', 'operations', 'technician'):
+                self.send_json({'error': 'Permission Denied'}, status=403)
+                return
+            inst_id = int(payload.get('installation_id', 0))
+            inst = next((i for i in DATA.installations if i['id'] == inst_id), None)
+            if not inst:
+                self.send_json({'error': 'Installation not found'}, status=404)
+                return
+            customer_name = payload.get('customer_name', '').strip()
+            if not customer_name:
+                self.send_json({'error': 'customer_name is required for sign-off'}, status=400)
+                return
+            rating = int(payload.get('rating', 5))
+            inst['customer_signoff'] = customer_name
+            inst['rating'] = max(1, min(5, rating))
+            inst['signoff_remarks'] = payload.get('remarks', '')
+            inst['signoff_date'] = date.today().isoformat()
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'CUSTOMER_SIGNOFF',
+                'resource': inst['ref'], 'result': f'customer={customer_name},rating={rating}'})
+            self.send_json({'status': 'success', 'customer_signoff': customer_name,
+                            'rating': inst['rating'], 'signoff_date': inst['signoff_date']})
+
+        elif parsed.path == '/api/approval-request':
+            role = payload.get('role', 'salesperson')
+            if role not in ('director', 'salesperson', 'operations'):
+                self.send_json({'error': 'Permission Denied: Only Sales Admin, Operations, or Director can raise approval requests.'}, status=403)
+                return
+            subject = payload.get('subject', '').strip()
+            if not subject:
+                self.send_json({'error': 'subject is required'}, status=400)
+                return
+            apr_ref = f"APR/2026/{len(DATA.approvals)+1:04d}"
+            new_apr = {
+                'id': len(DATA.approvals)+1, 'ref': apr_ref,
+                'type': payload.get('type', 'general'), 'subject': subject,
+                'requested_by': role, 'requested_at': date.today().isoformat(),
+                'status': 'pending', 'amount': float(payload.get('amount', 0.0)),
+                'installation_id': payload.get('installation_id'),
+                'decision': None, 'decided_by': None, 'remarks': ''
+            }
+            DATA.approvals.append(new_apr)
+            DATA.notifications.append({
+                'id': len(DATA.notifications)+1, 'role': 'director',
+                'type': 'approval_pending', 'read': False,
+                'message': f'New approval request {apr_ref} awaiting your decision: {subject}',
+                'related': apr_ref, 'created_at': datetime.utcnow().isoformat()
+            })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'RAISE_APPROVAL', 'resource': apr_ref, 'result': 'pending'})
+            self.send_json({'status': 'success', 'ref': apr_ref})
+
+        elif parsed.path == '/api/approval-decision':
+            role = payload.get('role', 'director')
+            if role != 'director':
+                self.send_json({'error': 'Permission Denied: Only Director can approve or reject approval requests.'}, status=403)
+                return
+            apr_id = int(payload.get('id', 0))
+            decision = payload.get('decision')
+            if decision not in ('approved', 'rejected'):
+                self.send_json({'error': "decision must be 'approved' or 'rejected'"}, status=400)
+                return
+            apr = next((a for a in DATA.approvals if a['id'] == apr_id), None)
+            if not apr:
+                self.send_json({'error': 'Approval request not found'}, status=404)
+                return
+            if apr['status'] != 'pending':
+                self.send_json({'error': f"Approval request is already '{apr['status']}'"}, status=400)
+                return
+            apr['status'] = decision
+            apr['decision'] = decision
+            apr['decided_by'] = 'director'
+            apr['decided_at'] = date.today().isoformat()
+            apr['remarks'] = payload.get('remarks', '')
+            DATA.notifications.append({
+                'id': len(DATA.notifications)+1, 'role': apr['requested_by'],
+                'type': f'approval_{decision}', 'read': False,
+                'message': f'Approval request {apr["ref"]} has been {decision} by Director',
+                'related': apr['ref'], 'created_at': datetime.utcnow().isoformat()
+            })
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': 'director', 'role': 'director', 'action': f'APPROVAL_{decision.upper()}',
+                'resource': apr['ref'], 'result': decision})
+            self.send_json({'status': 'success', 'decision': decision, 'ref': apr['ref']})
+
+        elif parsed.path == '/api/purchase-order-create':
+            role = payload.get('role', 'operations')
+            if role not in ('director', 'operations'):
+                self.send_json({'error': 'Permission Denied: Only Operations Manager or Director can create purchase orders.'}, status=403)
+                return
+            vendor = payload.get('vendor', '').strip()
+            item = payload.get('item', '').strip()
+            qty = int(payload.get('qty', 1))
+            unit_cost = float(payload.get('unit_cost', 0.0))
+            if not vendor or not item or qty <= 0 or unit_cost <= 0:
+                self.send_json({'error': 'vendor, item, qty(>0), and unit_cost(>0) are required'}, status=400)
+                return
+            po_ref = f"PO/2026/{len(DATA.purchase_orders)+1:04d}"
+            new_po = {
+                'id': len(DATA.purchase_orders)+1, 'ref': po_ref,
+                'vendor': vendor, 'item': item, 'qty': qty, 'unit_cost': unit_cost,
+                'amount_total': round(qty * unit_cost, 2), 'state': 'draft',
+                'created_by': role, 'created_at': date.today().isoformat(), 'receipt_date': None
+            }
+            DATA.purchase_orders.append(new_po)
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'CREATE_PO', 'resource': po_ref,
+                'result': f'amount={new_po["amount_total"]}'})
+            self.send_json({'status': 'success', 'ref': po_ref, 'amount_total': new_po['amount_total']})
+
+        elif parsed.path == '/api/stock-receive':
+            role = payload.get('role', 'operations')
+            if role not in ('director', 'operations'):
+                self.send_json({'error': 'Permission Denied'}, status=403)
+                return
+            po_id = int(payload.get('po_id', 0))
+            qty_received = int(payload.get('qty_received', 0))
+            po = next((p for p in DATA.purchase_orders if p['id'] == po_id), None)
+            if not po:
+                self.send_json({'error': 'Purchase order not found'}, status=404)
+                return
+            item_lower = po['item'].lower()
+            inv_key = None
+            for k, v in DATA.inventory.items():
+                if any(w in v['name'].lower() for w in item_lower.split()[:3]):
+                    inv_key = k
+                    break
+            if inv_key:
+                DATA.inventory[inv_key]['on_hand'] += qty_received
+            po['state'] = 'done'
+            po['receipt_date'] = date.today().isoformat()
+            DATA.audit_log.append({'id': len(DATA.audit_log)+1, 'ts': datetime.utcnow().isoformat(),
+                'user': role, 'role': role, 'action': 'STOCK_RECEIVE',
+                'resource': po['ref'], 'result': f'qty={qty_received}'})
+            self.send_json({'status': 'success', 'po_ref': po['ref'], 'qty_received': qty_received,
+                            'inventory_key': inv_key})
+
+        elif parsed.path == '/api/notification-mark-read':
+            role = payload.get('role', 'director')
+            notif_id = payload.get('id')
+            mark_all = payload.get('all', False)
+            if mark_all:
+                for n in DATA.notifications:
+                    if n['role'] == role:
+                        n['read'] = True
+                self.send_json({'status': 'success', 'marked': 'all'})
+            else:
+                notif = next((n for n in DATA.notifications if n['id'] == notif_id), None)
+                if notif:
+                    notif['read'] = True
+                    self.send_json({'status': 'success', 'id': notif_id})
+                else:
+                    self.send_json({'error': 'Notification not found'}, status=404)
+
+        else:
+            self.send_json({'error': 'Endpoint Not Found'}, status=404)
 
     def send_json(self, data, status=200):
         body = json.dumps(data, indent=2).encode('utf-8')
@@ -3608,6 +4155,9 @@ class EnterpriseSolarHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Connection', 'close')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('X-XSS-Protection', '1; mode=block')
         self.end_headers()
         self.wfile.write(body)
 

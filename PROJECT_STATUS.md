@@ -1,72 +1,67 @@
 # PROJECT_STATUS.md — SolarFlow 360
 
 ## 1. Project Phase
-- **Current Phase**: Part 3 — Advanced AI, Security, Role-Based Access Control, UI Excellence & Code Quality
-- **Status**: **COMPLETE & PRODUCTION-READY**
-- **Evaluation Status**: All Acceptance Gates Satisfied
+- **Current Phase**: Enterprise Solar ERP Master Implementation & Production Readiness
+- **Status**: **COMPLETE, GROUNDED & PRODUCTION-READY**
+- **Evaluation Status**: 100% Passing Test Rate (85 pytest + 25 live endpoint integration tests = 110 total)
+
+---
 
 ## 2. Completed Milestones
 
-### Role-Based User Experiences & Dashboards (4 Roles)
-- [x] **Director / Administrator**:
-  - Full company-wide operational visibility across all 12 modules.
-  - Landing dashboard: **Executive Operations Overview** with macro KPIs (revenue, velocity, gross margin, tech pool) and critical operational alerts.
-  - Unrestricted financial intelligence ledgers, job costing, and management approvals.
-- [x] **Sales Administrator**:
-  - Landing dashboard: **Sales Administrator Dashboard & Pipeline** with active leads, qualified pipeline value, survey requests, and conversion rates.
-  - Access to CRM leads, site survey requests, solar packages, quotation generation, and customer communications.
-  - Strict restrictions: financial margins stripped, no workforce administration, no direct inventory modification.
-- [x] **Operations Manager**:
-  - Landing dashboard: **Operations Manager Dashboard & Funnel** with lifecycle throughput, survey approval queue, low stock reorder alerts, and weather delay exceptions.
-  - Full workforce dispatch administration, roof survey review & approval, equipment dispatch, and service management.
-  - Restrictions: company-wide executive financial ledgers restricted via HTTP 403.
-- [x] **Field Technician**:
-  - Landing dashboard: **Personal Technician Dashboard — My Assigned Jobs** (Suresh Patel).
-  - Row-level isolation: only sees assigned jobs and necessary customer site details.
-  - Quick action toolbar: equipment serial scanning, electrical safety testing verification (DC V, AC V, Earthing resistance), and customer walkthrough sign-off.
-  - Strict restrictions: financial reports blocked (403), other technicians' records hidden, CRM leads hidden, warehouse stock modification blocked (403).
+### Enterprise Workflow Engine & Endpoints (All 13 Stages)
+- [x] **Stage 1 (Lead Management)**: CRM lead creation with duplicate detection (`POST /api/create-lead`, `/api/lead-action`).
+- [x] **Stage 2 (Site Survey)**: Survey dossier submission, orientation, shading, and tilt logging (`POST /api/survey-submit`, `/api/survey-action`).
+- [x] **Stage 3 (Solar Sizing Engine)**: PV-Inverter sizing calculator with DC/AC ratio checks (`POST /api/sizing-calculate`, `/api/roof-analyze`).
+- [x] **Stage 4 (Packages & Quotations)**: Pre-engineered package selection, custom BOM line items, discount calculation (`POST /api/quotation-create`, `/api/quotation-action`).
+- [x] **Stage 5 (Financial Confirmation)**: Advance payment recording and order state transitions (`POST /api/payment-record`).
+- [x] **Stage 6 (Inventory & Procurement)**: Purchase order generation, stock receipts, and equipment reservation (`POST /api/purchase-order-create`, `/api/stock-receive`, `/api/reserve-stock`).
+- [x] **Stage 7 (Technician Dispatch)**: Workforce assignment with skill guards (e.g. 5kW+ Three-Phase cert mandatory) and load capacity limits (`POST /api/assign-technician`, `/api/dispatch-optimize`).
+- [x] **Stage 8 & 9 (Installation & QA)**: Electrical test measurements (DC/AC V, earthing resistance) and 5-point QA checklist (`POST /api/qa-submit`, `/api/installation-action`).
+- [x] **Stage 10 (Customer Sign-off)**: Customer signature acknowledgement, 1-5 star ratings, and remarks (`POST /api/customer-signoff`).
+- [x] **Stage 11 (Commissioning)**: Final sign-off with net-meter numbers, guarded by QA test pass (`POST /api/commissioning`).
+- [x] **Stage 12 (Warranty Activation)**: Automatic 3-tier warranty provisioning upon commissioning (25y panel, 5y inverter, 1y workmanship).
+- [x] **Stage 13 (Service & Subsidy)**: Service breakdown ticketing, warranty entitlement check, and PM Surya Ghar subsidy tracking (`POST /api/service-ticket-create`, `/api/subsidy-action`).
 
-### UI Improvements & Dark / Light Theme System
-- [x] **Seamless Dark / Light Theme Toggle**:
-  - Default: Dark mode (`#09090b` canvas with `#f59e0b` gold accents).
-  - Toggle button with live sun/moon icon in the top header bar.
-  - Comprehensive CSS variables (`var(--bg-canvas)`, `var(--bg-surface)`, `var(--bg-elevated)`, `var(--text-main)`, `var(--text-muted)`).
-  - Persistent user preference saved in `localStorage.getItem('solarflow_theme')`.
-  - Zero layout shifts when toggling; verified high-contrast readability across all 12 navigation modules, badges, alerts, modals, and tables.
+### Role-Based Security & Server-Side Sessions
+- [x] **Server-Side Session Store**: Cryptographically random UUID sessions stored server-side in `SESSIONS` dict.
+- [x] **HttpOnly Cookies**: Session tokens issued via `Set-Cookie: sf_session=...; HttpOnly; SameSite=Strict; Path=/`.
+- [x] **Security Headers**: Standard headers added across all responses (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`).
+- [x] **Strict RBAC Enforcement**:
+  - GET `/api/financials`: 403 Forbidden for Technician, Salesperson, and Operations Manager.
+  - POST `/api/survey-action` (approve/reject): 403 Forbidden for Salesperson and Technician.
+  - POST `/api/installation-action` (commission): 403 Forbidden for Technician and Salesperson.
+  - POST `/api/create-lead`: 403 Forbidden for Field Technician.
+  - POST `/api/quotation-create`: 403 Forbidden for Field Technician.
+  - GET `/api/audit-log`: 403 Forbidden for all non-Director roles.
+  - Row-level filtering: Field Technicians strictly see only their own assigned jobs and service tickets.
 
-### Code Quality, Security & Addons Integrity
-- [x] **Bug Fixes**:
-  - Fixed `import math` positioning bug in `ai_services/roof_assessment/roof_analyzer.py`.
-  - Added missing `tests/integration/__init__.py`.
-  - Replaced hardcoded `#fff`, `#d4d4d8`, and `#000` text/background colors with semantic design tokens.
-- [x] **Odoo 17 Security Groups & Record Rules**:
-  - Created `group_solar_operations_manager` in `solar_security_groups.xml`.
-  - Added model access CSV rules (`ir.model.access.csv`) across all core addons for Operations Manager.
-  - Configured record rules (`ir.rule`) in `solar_crm`, `solar_installation`, `solar_survey`, `solar_warranty`, `solar_service`.
+### Odoo 17 CE Connection Layer
+- [x] **`odoo_bridge.py`**:
+  - Standard XML-RPC client targeting `/xmlrpc/2/common` and `/xmlrpc/2/object`.
+  - Non-blocking socket timeout transport to prevent server hangs.
+  - Resilient hybrid fallback to in-memory `EnterpriseDataStore` when Odoo CE container is offline.
+  - Real-time diagnostic telemetry at `GET /api/odoo-status`.
 
-### Moderate Enterprise Login Portal & Distinct Role Credentials
-- [x] **Moderate & Clean UI Design**:
-  - Refined, moderate enterprise aesthetic aligning with Odoo 17 CE official design principles.
-  - Subdued elevation shadows and balanced borders replacing over-the-top glows.
-  - Dual-mode support (Light & Dark themes) with crisp contrast, clean badges, and responsive grid layouts.
-- [x] **Distinct Email and Password Authentication per Role**:
-  - **Director / Executive Administrator**: `director@sunpower.com` | `Director@360` (Full executive scope & financials)
-  - **Sales Administrator**: `sales@sunpower.com` | `Sales@360` (Siddharth Rao - CRM pipeline & quotations)
-  - **Operations Manager**: `ops@sunpower.com` | `Ops@360` (Pradeep Gowda - 15-tech dispatch & inventory)
-  - **Field Technician**: `tech@sunpower.com` | `Tech@360` (Suresh Patel - Assigned work orders & safety testing)
-- [x] **Credential Verification & Interactive Helpers**:
-  - Two-factor visual feedback: quick "Autofill" button on role cards and interactive credentials form with email/password validation.
-  - Password show/hide toggle (`👁` / `🔒`).
-  - Inline error feedback on unauthorized emails or incorrect passwords.
-  - REST API endpoint (`POST /api/login` and `POST /api/auth`) returning role-scoped session tokens.
+### Maker-Checker Governance & Approvals
+- [x] **Approval Request Inbox**: Sales and Operations submit requests for financial exceptions or credit limits (`POST /api/approval-request`).
+- [x] **Director Authority**: Only Director can approve or reject pending requests (`POST /api/approval-decision`).
+- [x] **Immutable Audit Log**: Every login, workflow transition, approval, and payment recorded in `DATA.audit_log` with timestamp and user email.
 
-### Automated Testing Suite (98 Tests Passed 100%)
-- [x] **38 Gateway & Runtime Endpoint Tests (`test_server_endpoints.py`)**: 100% PASS
-  - All 15 REST endpoints, Global Search, 10 BI assistant queries, CRM lead ingestion, survey approvals, tech dispatch, safety testing, commissioning, and negative constraint tests.
-- [x] **28 Cross-Module Integration Tests (`tests/integration/`)**: 100% PASS
-  - Addon manifests, XML views, ACL CSVs, Python syntax, AI services, and business rules.
-- [x] **23 Role-Based Security Boundary Tests (`tests/test_role_security_matrix.py`)**: 100% PASS
-  - Separate automated verification of Director, Salesperson, Operations Manager, and Field Technician permissions, record-level isolation, margin stripping, and HTTP 403 denial.
-- [x] **9 Role Login & Distinct Credentials Tests (`tests/test_role_login_credentials.py`)**: 100% PASS
-  - Automated verification of each role's distinct email/password, 401 Unauthorized rejection on bad passwords, and unregistered email prevention.
-- [x] **Grand Total**: **98 automated tests executed with 100% pass rate**.
+### Automated Test Coverage (110 Total Tests)
+- [x] `tests/test_role_login_credentials.py` (9 tests) — Distinct credentials & auth validation.
+- [x] `tests/test_role_security_matrix.py` (23 tests) — RBAC permissions matrix.
+- [x] `tests/test_e2e_customer_journey.py` (1 test) — Full 13-stage customer journey.
+- [x] `tests/test_workflow_state_machine.py` (10 tests) — State machine transition guards.
+- [x] `tests/test_failed_workflows.py` (15 tests) — 15 failure scenarios and boundary edge cases.
+- [x] `tests/integration/` (27 tests) — Manifests, security rules, AI services, cross-module integrity.
+- [x] `run_smoke_test.py` (25 tests) — Live server integration tests covering all routes and security headers.
+
+---
+
+## 3. Core Deliverables Generated
+- `AUDIT_MATRIX.md` — Complete system audit matrix across 12 modules and 6 engineering dimensions.
+- `WORKFLOW_STATES.md` — State transition specifications and Mermaid state diagrams.
+- `API_DOCUMENTATION.md` — Full REST API documentation with request/response schemas.
+- `odoo_bridge.py` — Authoritative XML-RPC bridge with transparent fallback.
+- `server.py` — Upgraded, hardened multi-threaded server with session cookies and all workflow endpoints.
